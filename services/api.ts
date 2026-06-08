@@ -86,6 +86,23 @@ export const api = {
 
     return res.json();
   },
+
+  patchForm: async <T>(url: string, formData: FormData): Promise<T> => {
+    const res = await fetch(`${BASE_URL}${url}`, {
+      method: "PATCH",
+      headers: {
+        ...(getToken() && { Authorization: `Bearer ${getToken()}` }),
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: "Request failed" }));
+      throw new Error(err.message || "Request failed");
+    }
+
+    return res.json();
+  },
 };
 
 export const authApi = {
@@ -102,6 +119,16 @@ export const usersApi = {
   getMe: () => api.get<User>("/users/me"),
   updateProfile: (data: { username?: string; displayName?: string; bio?: string }) =>
     api.patch<User>("/users/me", data),
+  uploadAvatar: (file: File) => {
+    const fd = new FormData();
+    fd.append("avatar", file);
+    return api.patchForm<User>("/users/me", fd);
+  },
+  uploadCover: (file: File) => {
+    const fd = new FormData();
+    fd.append("cover", file);
+    return api.patchForm<User>("/users/me", fd);
+  },
 };
 
 export const decodeToken = (token: string) => {
