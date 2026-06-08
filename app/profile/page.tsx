@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "@/app/auth/types/user";
 import { usersApi, getFileUrl, postsApi, Post } from "@/services/api";
+import Header from "@/components/Header";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -89,19 +90,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <header className="bg-surface border-b border-border-gray px-4 py-3">
-        <div className="flex items-center justify-between max-w-screen-xl mx-auto">
-          <h1 className="text-text-base text-base font-bold uppercase tracking-wider">
-            Profile
-          </h1>
-          <button
-            onClick={() => router.replace("/home")}
-            className="h-9 px-4 rounded-full bg-transparent border border-light-border text-text-base text-xs font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated"
-          >
-            Back
-          </button>
-        </div>
-      </header>
+      <Header user={user} />
 
       <main className="flex-1">
         <div className="max-w-screen-lg mx-auto px-4 py-6">
@@ -206,7 +195,11 @@ export default function ProfilePage() {
                     {posts.map((post) => {
                       const imageUrl = getFileUrl(post.images?.[0]);
                       return (
-                        <div key={post.id} className="aspect-square bg-surface-elevated overflow-hidden">
+                        <div
+                          key={post.id}
+                          className="aspect-square bg-surface-elevated overflow-hidden cursor-pointer"
+                          onClick={() => router.push(`/posts/${post.id}`)}
+                        >
                           {imageUrl ? (
                             <img
                               src={imageUrl}

@@ -1,6 +1,6 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-interface User {
+export interface User {
   id: string;
   email: string;
   username: string;
@@ -140,6 +140,7 @@ export interface Post {
 
 export const postsApi = {
   getMyPosts: () => api.get<Post[]>("/posts/me"),
+  getPost: (id: string) => api.get<Post>(`/posts/${id}`),
 };
 
 export const decodeToken = (token: string) => {
