@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #121212;
+  --foreground: #ffffff;
+  --surface: #181818;
+  --surface-elevated: #1f1f1f;
+  --text-base: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-near-white: #cbcbcb;
+  --text-light: #fdfdfd;
+  --sp-green: #1ed760;
+  --sp-green-border: #1db954;
+  --border-gray: #4d4d4d;
+  --light-border: #7c7c7c;
+  --separator: #b3b3b3;
+  --light-surface: #eeeeee;
+  --negative-red: #f3727f;
+  --warning-orange: #ffa42b;
+  --announcement-blue: #539df5;
+  --dark-card: #252525;
+  --mid-card: #272727;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-text-base: var(--text-base);
+  --color-text-secondary: var(--text-secondary);
+  --color-sp-green: var(--sp-green);
+  --color-border-gray: var(--border-gray);
+  --color-light-border: var(--light-border);
+  --color-negative-red: var(--negative-red);
+  --color-warning-orange: var(--warning-orange);
+  --color-announcement-blue: var(--announcement-blue);
+  --color-dark-card: var(--dark-card);
+  --color-mid-card: var(--mid-card);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    background: var(--background);
+    color: var(--text-base);
+    font-family: var(--font-geist-sans), CircularSp-Arab, CircularSp-Hebr, CircularSp-Cyrl, CircularSp-Grek, CircularSp-Deva, Helvetica Neue, helvetica, arial, Hiragino Sans, Hiragino Kaku Gothic ProN, Meiryo, MS Gothic, sans-serif;
+    text-rendering: optimizeLegibility;
+    content-visibility: auto;
+  }
+  ::selection {
+    background: var(--sp-green);
+    color: #000000;
+  }
 }

@@ -1,20 +1,122 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-export const api = async (url: string, options: RequestInit = {}) => {
-  const token = localStorage.getItem("token");
+interface User {
+  id: string;
+  email: string;
+  username: string;
+  displayName: string;
+  createdAt?: string;
+  updatedAt?: string;
+  avatar?: string;
+  cover?: string;
+  bio?: string;
+  role?: string;
+}
 
-  const res = await fetch(`${BASE_URL}${url}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-  });
+interface LoginResponse {
+  access_token: string;
+}
 
-  if (!res.ok) {
-    throw new Error("API error");
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("token");
   }
+  return null;
+};
 
-  return res.json();
+const buildHeaders = (extra?: Record<string, string>) => ({
+  "Content-Type": "application/json",
+  ...(getToken() && { Authorization: `Bearer ${getToken()}` }),
+  ...extra,
+});
+
+export const api = {
+  get: async <T>(url: string): Promise<T> => {
+    const res = await fetch(`${BASE_URL}${url}`, {
+      headers: buildHeaders(),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: "Request failed" }));
+      throw new Error(err.message || "Request failed");
+    }
+
+    return res.json();
+  },
+
+  post: async <T>(url: string, body: unknown): Promise<T> => {
+    const res = await fetch(`${BASE_URL}${url}`, {
+      method: "POST",
+      headers: buildHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: "Request failed" }));
+      throw new Error(err.message || "Request failed");
+    }
+
+    return res.json();
+  },
+
+  del: async (url: string): Promise<void> => {
+    const res = await fetch(`${BASE_URL}${url}`, {
+      method: "DELETE",
+      headers: buildHeaders(),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: "Request failed" }));
+      throw new Error(err.message || "Request failed");
+    }
+  },
+
+  patch: async <T>(url: string, body: unknown): Promise<T> => {
+    const res = await fetch(`${BASE_URL}${url}`, {
+      method: "PATCH",
+      headers: buildHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: "Request failed" }));
+      throw new Error(err.message || "Request failed");
+    }
+
+    return res.json();
+  },
+};
+
+export const authApi = {
+  login: (email: string, password: string) =>
+    api.post<LoginResponse>("/auth/login", { email, password }),
+  register: (email: string, username: string, displayName: string, password: string) =>
+    api.post<{ id: string; email: string; username: string; displayName: string }>(
+      "/auth/register",
+      { email, username, displayName, password }
+    ),
+};
+
+export const usersApi = {
+  getMe: () => api.get<User>("/users/me"),
+  updateProfile: (data: { username?: string; displayName?: string; bio?: string }) =>
+    api.patch<User>("/users/me", data),
+};
+
+export const decodeToken = (token: string) => {
+  try {
+    const payload = token.split(".")[1];
+    const decoded = JSON.parse(atob(payload));
+    return decoded;
+  } catch {
+    return null;
+  }
+};
+
+export const getFileUrl = (fileName?: string) => {
+  if (!fileName) return null;
+  const endpoint = process.env.NEXT_PUBLIC_MINIO_ENDPOINT || "localhost:9000";
+  const bucket = process.env.NEXT_PUBLIC_MINIO_BUCKET || "social";
+  return `http://${endpoint}/${bucket}/${fileName}`;
 };
