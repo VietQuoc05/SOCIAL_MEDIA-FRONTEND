@@ -71,11 +71,12 @@ export default function HomePage() {
             >
               {user?.avatar ? (
                 <img
-                  src={getFileUrl(user.avatar)!}
+                  src={getFileUrl(user.avatar) || undefined}
                   alt="avatar"
                   className="w-full h-full object-cover"
                 />
-              ) : (
+              ) : null}
+              {!user?.avatar && (
                 <svg
                   className="w-5 h-5 text-text-secondary"
                   fill="none"

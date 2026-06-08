@@ -131,6 +131,17 @@ export const usersApi = {
   },
 };
 
+export interface Post {
+  id: string;
+  caption?: string;
+  images: string[];
+  createdAt?: string;
+}
+
+export const postsApi = {
+  getMyPosts: () => api.get<Post[]>("/posts/me"),
+};
+
 export const decodeToken = (token: string) => {
   try {
     const payload = token.split(".")[1];
@@ -142,8 +153,10 @@ export const decodeToken = (token: string) => {
 };
 
 export const getFileUrl = (fileName?: string) => {
-  if (!fileName) return null;
-  const endpoint = process.env.NEXT_PUBLIC_MINIO_ENDPOINT || "localhost:9000";
+  if (!fileName) return "";
+  const endpoint = process.env.NEXT_PUBLIC_MINIO_ENDPOINT || "localhost";
+  const port = process.env.NEXT_PUBLIC_MINIO_PORT || "9000";
   const bucket = process.env.NEXT_PUBLIC_MINIO_BUCKET || "social";
-  return `http://${endpoint}/${bucket}/${fileName}`;
+  const endpointWithPort = endpoint.includes(":") ? endpoint : `${endpoint}:${port}`;
+  return `http://${endpointWithPort}/${bucket}/${fileName}`;
 };

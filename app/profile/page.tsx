@@ -3,11 +3,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "@/app/auth/types/user";
-import { usersApi, getFileUrl } from "@/services/api";
+import { usersApi, getFileUrl, postsApi, Post } from "@/services/api";
 
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -26,6 +27,8 @@ export default function ProfilePage() {
       try {
         const data = (await usersApi.getMe()) as User;
         setUser(data);
+        const myPosts = (await postsApi.getMyPosts()) as Post[];
+        setPosts(myPosts || []);
       } catch {
         router.replace("/login");
       } finally {
@@ -110,7 +113,7 @@ export default function ProfilePage() {
             >
               {user?.cover ? (
                 <img
-                  src={getFileUrl(user.cover)!}
+                  src={getFileUrl(user.cover) || undefined}
                   alt="cover"
                   className="w-full h-full object-cover"
                 />
@@ -139,13 +142,13 @@ export default function ProfilePage() {
                   title="Click to change avatar"
                 >
                   <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-surface bg-surface-elevated overflow-hidden">
-                    {user?.avatar ? (
-                      <img
-                        src={getFileUrl(user.avatar)!}
-                        alt="avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
+{user?.avatar ? (
+                        <img
+                          src={getFileUrl(user.avatar) || undefined}
+                          alt="avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <svg
                           className="w-12 h-12 text-text-secondary"
@@ -197,6 +200,32 @@ export default function ProfilePage() {
                 </div>
               </div>
 
+              {posts.length > 0 && (
+                <div className="mt-6 px-4 sm:px-6 pb-6">
+                  <div className="grid grid-cols-3 gap-1">
+                    {posts.map((post) => {
+                      const imageUrl = getFileUrl(post.images?.[0]);
+                      return (
+                        <div key={post.id} className="aspect-square bg-surface-elevated overflow-hidden">
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt="post"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-surface-elevated to-background" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {uploadError && (
                 <div className="mt-4 text-xs text-negative-red bg-negative-red/10 border border-negative-red/30 rounded-sm px-3 py-2">
                   {uploadError}
@@ -223,7 +252,6 @@ export default function ProfilePage() {
             © {new Date().getFullYear()} Social Media
           </span>
           <span className="text-xs text-text-secondary/60 normal-case">
-            Designed with Spotify-style dark theme
           </span>
         </div>
       </footer>
