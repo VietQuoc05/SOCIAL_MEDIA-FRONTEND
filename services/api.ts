@@ -103,6 +103,23 @@ export const api = {
 
     return res.json();
   },
+
+  postForm: async <T>(url: string, formData: FormData): Promise<T> => {
+    const res = await fetch(`${BASE_URL}${url}`, {
+      method: "POST",
+      headers: {
+        ...(getToken() && { Authorization: `Bearer ${getToken()}` }),
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: "Request failed" }));
+      throw new Error(err.message || "Request failed");
+    }
+
+    return res.json();
+  },
 };
 
 export const authApi = {
@@ -192,6 +209,12 @@ export const postsApi = {
     api.get<{ data: Post[]; nextCursor: string | null; hasMore: boolean }>(
       `/posts/feed${cursor ? `?cursor=${encodeURIComponent(cursor)}&limit=${limit}` : `?limit=${limit}`}`,
     ),
+  createPost: (caption: string, files: File[]) => {
+    const fd = new FormData();
+    fd.append("caption", caption);
+    files.forEach(f => fd.append("images", f));
+    return api.postForm<Post>("/posts", fd);
+  },
   deletePost: (id: string) => api.del(`/posts/${id}`),
 };
 

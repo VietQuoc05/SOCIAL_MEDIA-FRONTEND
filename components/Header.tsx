@@ -3,14 +3,17 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, getFileUrl, usersApi } from "@/services/api";
+import CreatePostModal from "./CreatePostModal";
 
 interface HeaderProps {
   user: User | null;
+  onPostCreated?: () => void;
 }
 
-export default function Header({ user }: HeaderProps) {
+export default function Header({ user, onPostCreated }: HeaderProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showPostModal, setShowPostModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -64,14 +67,45 @@ export default function Header({ user }: HeaderProps) {
     }
   };
 
+  const handleHomeClick = () => {
+    router.push("/home");
+  };
+
+  const handlePostCreated = () => {
+    if (onPostCreated) onPostCreated();
+  };
+
   return (
-    <header className="bg-surface border-b border-border-gray px-4 py-3">
+    <header className="sticky top-0 z-30 bg-surface border-b border-border-gray px-4 py-3">
       <div className="flex items-center justify-between max-w-screen-xl mx-auto">
-        <h1 className="text-text-base text-base font-bold uppercase tracking-wider">
-          Social Media
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-text-base text-base font-bold uppercase tracking-wider">
+            Social Media
+          </h1>
+          <button
+            onClick={handleHomeClick}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base transition-colors"
+            title="Home"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </button>
+        </div>
 
         <div className="flex items-center gap-3">
+          <div className="relative">
+            <button
+              onClick={() => setShowPostModal(true)}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-elevated border border-border-gray text-text-base hover:border-light-border active:scale-95 transition-all"
+              title="Create post"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+            <CreatePostModal open={showPostModal} onClose={() => setShowPostModal(false)} onSuccess={handlePostCreated} />
+          </div>
           <div className="relative" ref={searchRef}>
             <input
               type="text"
