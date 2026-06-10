@@ -12,6 +12,8 @@ interface FollowStats {
 }
 
 function ProfileContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const userId = searchParams.get('userId');
   const [me, setMe] = useState<User | null>(null);
   const [user, setUser] = useState<User | null>(null);
