@@ -122,6 +122,8 @@ export default function PostDetailPage() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
+  const [commentText, setCommentText] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -212,12 +214,30 @@ export default function PostDetailPage() {
   const submitReply = async () => {
     if (!replyContent.trim() || !replyParentId) return;
     try {
-      await commentsApi.create(postId, { content: replyContent, parentId: replyParentId });
+      if (replyParentId === "__ROOT__") {
+        await commentsApi.create(postId, { content: replyContent });
+      } else {
+        await commentsApi.create(postId, { content: replyContent, parentId: replyParentId });
+      }
       setReplyContent("");
       setReplyParentId(null);
       const data = await commentsApi.getByPost(postId) as Comment[];
       setComments(data || []);
     } catch {
+    }
+  };
+
+  const submitComment = async () => {
+    if (!commentText.trim()) return;
+    setSubmittingComment(true);
+    try {
+      await commentsApi.create(postId, { content: commentText });
+      setCommentText("");
+      const data = await commentsApi.getByPost(postId) as Comment[];
+      setComments(data || []);
+    } catch {
+    } finally {
+      setSubmittingComment(false);
     }
   };
 
@@ -333,6 +353,15 @@ export default function PostDetailPage() {
                     </svg>
                     <span className="text-xs">{post.totalReactions || 0}</span>
                   </button>
+                  <button
+                    onClick={() => setReplyParentId("__ROOT__")}
+                    className="flex items-center gap-1 text-text-secondary hover:text-text-base transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-4.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span className="text-xs">Comment</span>
+                  </button>
                   {user && post.author && user.id === post.author.id && (
                     <button
                       onClick={handleDelete}
@@ -364,7 +393,7 @@ export default function PostDetailPage() {
                     <textarea
                       value={replyContent}
                       onChange={(e) => setReplyContent(e.target.value)}
-                      placeholder="Write a reply..."
+                      placeholder={replyParentId === "__ROOT__" ? "Write a comment..." : "Write a reply..."}
                       className="w-full p-2 text-sm text-text-base normal-case bg-surface border border-border-gray rounded resize-none"
                       rows={2}
                     />
@@ -383,7 +412,7 @@ export default function PostDetailPage() {
                         disabled={!replyContent.trim()}
                         className="px-3 py-1 text-xs bg-sp-green text-white rounded disabled:opacity-50"
                       >
-                        Reply
+                        {replyParentId === "__ROOT__" ? "Comment" : "Reply"}
                       </button>
                     </div>
                   </div>
