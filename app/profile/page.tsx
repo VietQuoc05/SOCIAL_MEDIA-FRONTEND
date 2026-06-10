@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "@/app/auth/types/user";
 import { usersApi, getFileUrl, postsApi, Post, followApi, FollowRecord } from "@/services/api";
@@ -11,9 +11,7 @@ interface FollowStats {
   following: number;
 }
 
-export default function ProfilePage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+function ProfileContent() {
   const userId = searchParams.get('userId');
   const [me, setMe] = useState<User | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -479,5 +477,17 @@ export default function ProfilePage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen bg-background">
+        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
   );
 }
