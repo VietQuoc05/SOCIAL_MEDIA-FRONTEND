@@ -127,7 +127,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="h-11 rounded-[4px] bg-surface-elevated border border-border-gray text-text-base text-sm px-3 outline-none transition-all placeholder:text-text-secondary/60 hover:border-light-border focus:border-text-base"
-              placeholder="Enter your username"
+               placeholder="Nguyen Van A"
             />
           </div>
         )}
@@ -171,7 +171,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 setDisplayName(val);
               }}
               className="h-11 rounded-[4px] bg-surface-elevated border border-border-gray text-text-base text-sm px-3 outline-none transition-all placeholder:text-text-secondary/60 hover:border-light-border focus:border-text-base"
-              placeholder="lowercase, no spaces (min 6 chars)"
+               placeholder="vana.123"
             />
             <div className="flex justify-between">
               <span className="text-[11px] text-text-secondary/70 normal-case">

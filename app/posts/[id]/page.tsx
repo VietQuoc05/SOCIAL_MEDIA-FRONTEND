@@ -376,6 +376,35 @@ export default function PostDetailPage() {
                   )}
                 </div>
                 <div className="mt-4">
+                  {replyParentId && (
+                    <div className="p-3 bg-surface-elevated rounded mb-4">
+                      <textarea
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        placeholder={replyParentId === "__ROOT__" ? "Write a comment..." : "Write a reply..."}
+                        className="w-full p-2 text-sm text-text-base normal-case bg-surface border border-border-gray rounded resize-none"
+                        rows={2}
+                      />
+                      <div className="flex gap-2 mt-2 justify-end">
+                        <button
+                          onClick={() => {
+                            setReplyParentId(null);
+                            setReplyContent("");
+                          }}
+                          className="px-3 py-1 text-xs text-text-secondary hover:underline"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={submitReply}
+                          disabled={!replyContent.trim()}
+                          className="px-3 py-1 text-xs bg-sp-green text-white rounded disabled:opacity-50"
+                        >
+                          {replyParentId === "__ROOT__" ? "Comment" : "Reply"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {commentsLoading ? (
                     <p className="text-text-secondary text-xs">Loading comments...</p>
                   ) : comments.length > 0 ? (
@@ -388,35 +417,6 @@ export default function PostDetailPage() {
                     <p className="text-text-secondary text-xs">No comments yet</p>
                   )}
                 </div>
-                {replyParentId && (
-                  <div className="mt-4 p-3 bg-surface-elevated rounded">
-                    <textarea
-                      value={replyContent}
-                      onChange={(e) => setReplyContent(e.target.value)}
-                      placeholder={replyParentId === "__ROOT__" ? "Write a comment..." : "Write a reply..."}
-                      className="w-full p-2 text-sm text-text-base normal-case bg-surface border border-border-gray rounded resize-none"
-                      rows={2}
-                    />
-                    <div className="flex gap-2 mt-2 justify-end">
-                      <button
-                        onClick={() => {
-                          setReplyParentId(null);
-                          setReplyContent("");
-                        }}
-                        className="px-3 py-1 text-xs text-text-secondary hover:underline"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={submitReply}
-                        disabled={!replyContent.trim()}
-                        className="px-3 py-1 text-xs bg-sp-green text-white rounded disabled:opacity-50"
-                      >
-                        {replyParentId === "__ROOT__" ? "Comment" : "Reply"}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           )}
