@@ -1,19 +1,30 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "@/app/auth/types/user";
-import { usersApi, getFileUrl, postsApi, Post } from "@/services/api";
+import { usersApi, getFileUrl, postsApi, Post, followApi } from "@/services/api";
 import Header from "@/components/Header";
+
+interface FollowRecord {
+  follower?: User;
+  following?: User;
+}
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get('userId');
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState("");
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [followersList, setFollowersList] = useState<User[]>([]);
+  const [followingList, setFollowingList] = useState<User[]>([]);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,8 +39,15 @@ export default function ProfilePage() {
       try {
         const data = (await usersApi.getMe()) as User;
         setUser(data);
-        const myPosts = (await postsApi.getMyPosts()) as Post[];
-        setPosts(myPosts || []);
+        if (userId && userId !== data.id) {
+          const profileData = (await usersApi.getUser(userId)) as User;
+          setUser(profileData);
+          const userPosts = (await postsApi.getByUser(userId)) as Post[];
+          setPosts(userPosts || []);
+        } else {
+          const myPosts = (await postsApi.getMyPosts()) as Post[];
+          setPosts(myPosts || []);
+        }
       } catch {
         router.replace("/login");
       } finally {
@@ -38,7 +56,7 @@ export default function ProfilePage() {
     };
 
     load();
-  }, [router]);
+  }, [router, userId]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -168,19 +186,53 @@ export default function ProfilePage() {
                 <div className="flex-1 pt-4">
                   <div className="flex items-center justify-between">
                     <div>
+                      <p className="text-base text-text-secondary normal-case">
+                        {user?.username}
+                      </p>
                       <h2 className="text-text-base text-lg font-bold normal-case">
                         {user?.displayName || user?.username}
                       </h2>
-                      <p className="text-sm text-text-secondary normal-case">
-                        @{user?.displayName || user?.username}
-                      </p>
                     </div>
-                    <button
-                      onClick={() => router.push("/edit-profile")}
-                      className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={async () => {
+                          const data = await followApi.getFollowing();
+                          setFollowingList((data as FollowRecord[]).map(r => r.following).filter(Boolean) as User[]);
+                          setShowFollowingModal(true);
+                        }}
+                        disabled={!!userId}
+                        className="text-center disabled:cursor-default"
+                      >
+                        <span className="text-text-base font-bold normal-case">
+                          {user?.followingCount || 0}
+                        </span>
+                        <span className="block text-xs text-text-secondary normal-case">
+                          Following
+                        </span>
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const data = await followApi.getFollowers();
+                          setFollowersList((data as FollowRecord[]).map(r => r.follower).filter(Boolean) as User[]);
+                          setShowFollowersModal(true);
+                        }}
+                        disabled={!!userId}
+                        className="text-center disabled:cursor-default"
+                      >
+                        <span className="text-text-base font-bold normal-case">
+                          {user?.followersCount || 0}
+                        </span>
+                        <span className="block text-xs text-text-secondary normal-case">
+                          Followers
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => router.push("/edit-profile")}
+                        className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                      >
+                        Edit
+                      </button>
+                    </div>
                   </div>
 
                   <p className="mt-3 text-sm text-text-base normal-case">

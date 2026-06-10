@@ -117,6 +117,8 @@ export const authApi = {
 
 export const usersApi = {
   getMe: () => api.get<User>("/users/me"),
+  getUser: (id: string) => api.get<User>(`/users/${id}`),
+  search: (q: string) => api.get<User[]>(`/users/search?q=${encodeURIComponent(q)}`),
   updateProfile: (data: { username?: string; displayName?: string; bio?: string }) =>
     api.patch<User>("/users/me", data),
   uploadAvatar: (file: File) => {
@@ -131,16 +133,51 @@ export const usersApi = {
   },
 };
 
+export const followApi = {
+  follow: (id: string) => api.post(`/follow/${id}`, {}),
+  unfollow: (id: string) => api.del(`/follow/${id}`),
+  getFollowers: () => api.get<User[]>("/follow/followers"),
+  getFollowing: () => api.get<User[]>("/follow/following"),
+};
+
 export interface Post {
   id: string;
   caption?: string;
   images: string[];
   createdAt?: string;
+  author?: User;
+  isLiked?: boolean;
+  totalReactions?: number;
 }
+
+export interface Comment {
+  id: string;
+  author?: User;
+  content: string;
+  image?: string;
+  isLiked?: boolean;
+  totalReactions?: number;
+  replies?: Comment[];
+  createdAt?: string;
+}
+
+export const reactionsApi = {
+  togglePost: (postId: string) => api.post(`/reactions/post/${postId}`, {}),
+  toggleComment: (commentId: string) => api.post(`/reactions/comment/${commentId}`, {}),
+};
+
+export const commentsApi = {
+  getByPost: (postId: string) => api.get<Comment[]>(`/comments/post/${postId}`),
+  create: (postId: string, dto: { content: string; parentId?: string }) =>
+    api.post<Comment>(`/comments/${postId}`, dto),
+  update: (id: string, dto: { content: string }) => api.patch<Comment>(`/comments/${id}`, dto),
+  delete: (id: string, postId: string) => api.del(`/comments/${id}/${postId}`),
+};
 
 export const postsApi = {
   getMyPosts: () => api.get<Post[]>("/posts/me"),
   getPost: (id: string) => api.get<Post>(`/posts/${id}`),
+  getByUser: (userId: string) => api.get<Post[]>(`/posts/user/${userId}`),
 };
 
 export const decodeToken = (token: string) => {

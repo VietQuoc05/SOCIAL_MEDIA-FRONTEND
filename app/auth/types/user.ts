@@ -9,6 +9,11 @@ export interface User {
   cover?: string;
   bio?: string;
   role?: string;
+  followersCount?: number;
+  followingCount?: number;
+  postsCount?: number;
+  followStatus?: string;
+  mutualFriendCount?: number;
 }
 
 export interface LoginResponse {

@@ -2,8 +2,112 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { postsApi, getFileUrl, Post, usersApi, User } from "@/services/api";
+import { postsApi, getFileUrl, Post, User, usersApi, reactionsApi, commentsApi, Comment } from "@/services/api";
 import Header from "@/components/Header";
+
+function CommentItem({ comment, depth = 0, onReply, onUpdateComment }: { comment: Comment; depth?: number; onReply: (parentId: string) => void; onUpdateComment: (commentId: string, isLiked: boolean, totalReactions: number) => void }) {
+  const router = useRouter();
+  const [showReplies, setShowReplies] = useState(false);
+  const indent = depth * 16;
+
+  const handleCommentReact = async () => {
+    const newIsLiked = !comment.isLiked;
+    const newTotal = newIsLiked ? (comment.totalReactions || 0) + 1 : Math.max((comment.totalReactions || 1) - 1, 0);
+    onUpdateComment(comment.id, newIsLiked, newTotal);
+    try {
+      await reactionsApi.toggleComment(comment.id);
+    } catch {
+      onUpdateComment(comment.id, !newIsLiked, comment.totalReactions || 0);
+    }
+  };
+
+  return (
+    <div className="flex gap-2 py-2" style={{ marginLeft: `${indent}px` }}>
+      <button
+        onClick={() => router.push(`/profile?userId=${comment.author?.id}`)}
+        className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0"
+      >
+        {comment.author?.avatar ? (
+          <img
+            src={getFileUrl(comment.author.avatar) || ""}
+            alt="avatar"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <svg
+            className="w-4 h-4 text-text-secondary m-auto mt-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+        )}
+      </button>
+      <div className="flex-1">
+        <div className="flex flex-col">
+          <button
+            onClick={() => router.push(`/profile?userId=${comment.author?.id}`)}
+            className="text-text-base font-bold text-sm normal-case hover:underline text-left"
+          >
+            {comment.author?.displayName || comment.author?.username}
+          </button>
+          <p className="text-sm text-text-secondary normal-case">
+            {comment.author?.username}
+          </p>
+        </div>
+        <p className="text-sm text-text-base normal-case mt-1">{comment.content}</p>
+        {comment.image && (
+          <img
+            src={getFileUrl(comment.image) || ""}
+            alt="comment"
+            className="w-32 h-32 object-cover rounded mt-2 bg-surface-elevated"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        )}
+        <div className="flex items-center gap-2 mt-1">
+          <button
+            onClick={handleCommentReact}
+            className={`flex items-center gap-1 text-xs transition-colors ${comment.isLiked ? 'text-red-500' : 'text-text-secondary'} hover:text-red-400`}
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+            <span>{comment.totalReactions || 0}</span>
+          </button>
+          <button
+            onClick={() => onReply(comment.id)}
+            className="text-xs text-text-secondary hover:underline"
+          >
+            Reply
+          </button>
+        </div>
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="mt-1">
+            {(comment.replies.length > 2 && !showReplies ? comment.replies.slice(0, 2) : comment.replies).map((reply) => (
+              <CommentItem key={reply.id} comment={reply} depth={depth + 1} onReply={onReply} onUpdateComment={onUpdateComment} />
+            ))}
+            {comment.replies.length > 2 && !showReplies && (
+              <button
+                onClick={() => setShowReplies(true)}
+                className="text-xs text-text-secondary hover:underline"
+              >
+                View {comment.replies.length - 2} more replies
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function PostDetailPage() {
   const router = useRouter();
@@ -12,7 +116,12 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reacting, setReacting] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [replyParentId, setReplyParentId] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -38,6 +147,65 @@ export default function PostDetailPage() {
 
     load();
   }, [router, postId]);
+
+  useEffect(() => {
+    if (!postId) return;
+    const loadComments = async () => {
+      setCommentsLoading(true);
+      try {
+        const data = await commentsApi.getByPost(postId) as Comment[];
+        setComments(data || []);
+      } catch {
+      } finally {
+        setCommentsLoading(false);
+      }
+    };
+    loadComments();
+  }, [postId]);
+
+  const updateCommentReaction = (commentId: string, isLiked: boolean, totalReactions: number) => {
+    setComments(prev => prev.map(c => {
+      if (c.id === commentId) {
+        return { ...c, isLiked, totalReactions };
+      }
+      if (c.replies) {
+        return {
+          ...c,
+          replies: c.replies.map(r => r.id === commentId ? { ...r, isLiked, totalReactions } : r)
+        };
+      }
+      return c;
+    }));
+  };
+
+  const handleReact = async () => {
+    if (!post || reacting) return;
+    setReacting(true);
+    try {
+      await reactionsApi.togglePost(post.id);
+      const updatedPost = await postsApi.getPost(postId) as Post;
+      setPost(updatedPost);
+    } catch {
+    } finally {
+      setReacting(false);
+    }
+  };
+
+  const handleReply = (parentId: string) => {
+    setReplyParentId(parentId);
+  };
+
+  const submitReply = async () => {
+    if (!replyContent.trim() || !replyParentId) return;
+    try {
+      await commentsApi.create(postId, { content: replyContent, parentId: replyParentId });
+      setReplyContent("");
+      setReplyParentId(null);
+      const data = await commentsApi.getByPost(postId) as Comment[];
+      setComments(data || []);
+    } catch {
+    }
+  };
 
   if (loading) {
     return (
@@ -68,38 +236,133 @@ export default function PostDetailPage() {
                       e.currentTarget.style.display = 'none';
                     }}
                   />
-                  {canNavigate && (
-                    <>
-                      <button
-                        onClick={() => setCurrentImageIndex(i => i > 0 ? i - 1 : imagesCount - 1)}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-                        aria-label="Previous image"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+{canNavigate && (
+                     <>
+                       <button
+                         onClick={() => setCurrentImageIndex(i => i > 0 ? i - 1 : imagesCount - 1)}
+                         className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                         aria-label="Previous image"
+                       >
+                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                         </svg>
+                       </button>
+                       <button
+                         onClick={() => setCurrentImageIndex(i => i < imagesCount - 1 ? i + 1 : 0)}
+                         className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                         aria-label="Next image"
+                       >
+                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                         </svg>
+                       </button>
+                       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white bg-black/50 px-2 py-1 rounded">
+                         {currentImageIndex + 1} / {imagesCount}
+                       </div>
+                     </>
+                   )}
+                </div>
+              )}
+              <div className="p-4">
+                {post.author && (
+                  <div className="flex items-center gap-3 mb-3">
+                    <button
+                      onClick={() => router.push(`/profile?userId=${post.author?.id}`)}
+                      className="w-10 h-10 rounded-full border-2 border-border-gray bg-surface-elevated overflow-hidden"
+                    >
+                      {post.author.avatar ? (
+                        <img
+                          src={getFileUrl(post.author.avatar) || ""}
+                          alt="avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <svg
+                          className="w-5 h-5 text-text-secondary m-auto mt-2.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
                         </svg>
-                      </button>
+                      )}
+                    </button>
+                    <div className="flex flex-col">
                       <button
-                        onClick={() => setCurrentImageIndex(i => i < imagesCount - 1 ? i + 1 : 0)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-                        aria-label="Next image"
+                        onClick={() => router.push(`/profile?userId=${post.author?.id}`)}
+                        className="text-text-base font-bold normal-case hover:underline text-left"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
+                        {post.author.displayName || post.author.username}
                       </button>
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white bg-black/50 px-2 py-1 rounded">
-                        {currentImageIndex + 1} / {imagesCount}
+                      <p className="text-base text-text-secondary normal-case">
+                        {post.author.username}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {post.caption && (
+                  <p className="text-sm text-text-base normal-case mb-3">{post.caption}</p>
+                )}
+                <div className="flex items-center gap-2 pt-2 border-t border-border-gray">
+                  <button
+                    onClick={handleReact}
+                    disabled={reacting}
+                    className={`flex items-center gap-1 transition-colors ${post.isLiked ? 'text-red-500' : 'text-text-secondary'} ${reacting ? 'opacity-50 cursor-not-allowed' : 'hover:text-red-400'}`}
+                  >
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                    <span className="text-xs">{post.totalReactions || 0}</span>
+                  </button>
+                </div>
+                <div className="mt-4">
+                  {commentsLoading ? (
+                    <p className="text-text-secondary text-xs">Loading comments...</p>
+                  ) : comments.length > 0 ? (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="py-3 border-t border-border-gray">
+                        <CommentItem comment={comment} onReply={handleReply} onUpdateComment={updateCommentReaction} />
                       </div>
-                    </>
+                    ))
+                  ) : (
+                    <p className="text-text-secondary text-xs">No comments yet</p>
                   )}
                 </div>
-              )}
-              {post.caption && (
-                <div className="p-4">
-                  <p className="text-sm text-text-base normal-case">{post.caption}</p>
-                </div>
-              )}
+                {replyParentId && (
+                  <div className="mt-4 p-3 bg-surface-elevated rounded">
+                    <textarea
+                      value={replyContent}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      placeholder="Write a reply..."
+                      className="w-full p-2 text-sm text-text-base normal-case bg-surface border border-border-gray rounded resize-none"
+                      rows={2}
+                    />
+                    <div className="flex gap-2 mt-2 justify-end">
+                      <button
+                        onClick={() => {
+                          setReplyParentId(null);
+                          setReplyContent("");
+                        }}
+                        className="px-3 py-1 text-xs text-text-secondary hover:underline"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={submitReply}
+                        disabled={!replyContent.trim()}
+                        className="px-3 py-1 text-xs bg-sp-green text-white rounded disabled:opacity-50"
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
