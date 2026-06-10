@@ -16,6 +16,7 @@
   --separator: #b3b3b3;
   --light-surface: #eeeeee;
   --negative-red: #f3727f;
+  --like-pink: #ff2d55;
   --warning-orange: #ffa42b;
   --announcement-blue: #539df5;
   --dark-card: #252525;
@@ -33,6 +34,7 @@
   --color-border-gray: var(--border-gray);
   --color-light-border: var(--light-border);
   --color-negative-red: var(--negative-red);
+  --color-like-pink: var(--like-pink);
   --color-warning-orange: var(--warning-orange);
   --color-announcement-blue: var(--announcement-blue);
   --color-dark-card: var(--dark-card);

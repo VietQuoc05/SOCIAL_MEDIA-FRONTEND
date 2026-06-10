@@ -122,6 +122,7 @@ export default function PostDetailPage() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -193,6 +194,19 @@ export default function PostDetailPage() {
 
   const handleReply = (parentId: string) => {
     setReplyParentId(parentId);
+  };
+
+  const handleDelete = async () => {
+    if (!post || deleting) return;
+    if (!confirm("Are you sure you want to delete this post?")) return;
+    setDeleting(true);
+    try {
+      await postsApi.deletePost(post.id);
+      router.replace("/home");
+    } catch {
+      alert("Failed to delete post");
+      setDeleting(false);
+    }
   };
 
   const submitReply = async () => {
@@ -319,6 +333,18 @@ export default function PostDetailPage() {
                     </svg>
                     <span className="text-xs">{post.totalReactions || 0}</span>
                   </button>
+                  {user && post.author && user.id === post.author.id && (
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="flex items-center gap-1 text-negative-red hover:text-negative-red/80 transition-colors disabled:opacity-50"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <span className="text-xs">{deleting ? "Deleting..." : "Delete"}</span>
+                    </button>
+                  )}
                 </div>
                 <div className="mt-4">
                   {commentsLoading ? (

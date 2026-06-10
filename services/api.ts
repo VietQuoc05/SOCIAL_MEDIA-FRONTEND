@@ -188,6 +188,11 @@ export const postsApi = {
   getMyPosts: () => api.get<Post[]>("/posts/me"),
   getPost: (id: string) => api.get<Post>(`/posts/${id}`),
   getByUser: (userId: string) => api.get<Post[]>(`/posts/user/${userId}`),
+  getFeed: (cursor?: string, limit = 10) =>
+    api.get<{ data: Post[]; nextCursor: string | null; hasMore: boolean }>(
+      `/posts/feed${cursor ? `?cursor=${encodeURIComponent(cursor)}&limit=${limit}` : `?limit=${limit}`}`,
+    ),
+  deletePost: (id: string) => api.del(`/posts/${id}`),
 };
 
 export const decodeToken = (token: string) => {
