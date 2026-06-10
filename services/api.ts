@@ -133,11 +133,21 @@ export const usersApi = {
   },
 };
 
+export interface FollowRecord {
+  id: string;
+  follower: User;
+  following: User;
+  createdAt?: string;
+}
+
 export const followApi = {
   follow: (id: string) => api.post(`/follow/${id}`, {}),
   unfollow: (id: string) => api.del(`/follow/${id}`),
-  getFollowers: () => api.get<User[]>("/follow/followers"),
-  getFollowing: () => api.get<User[]>("/follow/following"),
+  getFollowers: (userId?: string) => api.get<FollowRecord[]>(`/follow/followers${userId ? `?userId=${userId}` : ""}`),
+  getFollowing: (userId?: string) => api.get<FollowRecord[]>(`/follow/following${userId ? `?userId=${userId}` : ""}`),
+  getFollowStats: (userId?: string) => userId 
+    ? api.get<{ followers: number; following: number }>(`/follow/stats?userId=${userId}`)
+    : api.get<{ followers: number; following: number }>("/follow/stats"),
 };
 
 export interface Post {
