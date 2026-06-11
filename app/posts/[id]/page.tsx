@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { postsApi, getFileUrl, Post, User, usersApi, reactionsApi, commentsApi, Comment } from "@/services/api";
 import Header from "@/components/Header";
 
-function CommentItem({ comment, depth = 0, onReply, onUpdateComment }: { comment: Comment; depth?: number; onReply: (parentId: string) => void; onUpdateComment: (commentId: string, isLiked: boolean, totalReactions: number) => void }) {
+function CommentItem({ comment, depth = 0, onReply, onUpdateComment, onDeleteComment, currentUserId, postAuthorId }: { comment: Comment; depth?: number; onReply: (parentId: string) => void; onUpdateComment: (commentId: string, isLiked: boolean, totalReactions: number) => void; onDeleteComment: (commentId: string) => void; currentUserId?: string; postAuthorId?: string }) {
   const router = useRouter();
   const [showReplies, setShowReplies] = useState(false);
   const indent = depth * 16;
@@ -88,11 +88,23 @@ function CommentItem({ comment, depth = 0, onReply, onUpdateComment }: { comment
           >
             Reply
           </button>
+          {(currentUserId && (comment.author?.id === currentUserId || postAuthorId === currentUserId)) && (
+            <button
+              onClick={() => {
+                if (confirm("Are you sure you want to delete this comment?")) {
+                  onDeleteComment(comment.id);
+                }
+              }}
+              className="text-xs text-negative-red hover:underline"
+            >
+              Delete
+            </button>
+          )}
         </div>
         {comment.replies && comment.replies.length > 0 && (
           <div className="mt-1">
             {(comment.replies.length > 2 && !showReplies ? comment.replies.slice(0, 2) : comment.replies).map((reply) => (
-              <CommentItem key={reply.id} comment={reply} depth={depth + 1} onReply={onReply} onUpdateComment={onUpdateComment} />
+              <CommentItem key={reply.id} comment={reply} depth={depth + 1} onReply={onReply} onUpdateComment={onUpdateComment} onDeleteComment={onDeleteComment} currentUserId={currentUserId} postAuthorId={postAuthorId} />
             ))}
             {comment.replies.length > 2 && !showReplies && (
               <button
@@ -198,6 +210,16 @@ export default function PostDetailPage() {
     setReplyParentId(parentId);
   };
 
+  const deleteComment = async (commentId: string) => {
+    try {
+      await commentsApi.delete(commentId, postId);
+      const data = await commentsApi.getByPost(postId) as Comment[];
+      setComments(data || []);
+    } catch {
+      alert("Failed to delete comment");
+    }
+  };
+
   const handleDelete = async () => {
     if (!post || deleting) return;
     if (!confirm("Are you sure you want to delete this post?")) return;
@@ -270,31 +292,31 @@ export default function PostDetailPage() {
                       e.currentTarget.style.display = 'none';
                     }}
                   />
-{canNavigate && (
-                     <>
-                       <button
-                         onClick={() => setCurrentImageIndex(i => i > 0 ? i - 1 : imagesCount - 1)}
-                         className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-                         aria-label="Previous image"
-                       >
-                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                         </svg>
-                       </button>
-                       <button
-                         onClick={() => setCurrentImageIndex(i => i < imagesCount - 1 ? i + 1 : 0)}
-                         className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-                         aria-label="Next image"
-                       >
-                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                         </svg>
-                       </button>
-                       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white bg-black/50 px-2 py-1 rounded">
-                         {currentImageIndex + 1} / {imagesCount}
-                       </div>
-                     </>
-                   )}
+                  {canNavigate && (
+                    <>
+                      <button
+                        onClick={() => setCurrentImageIndex(i => i > 0 ? i - 1 : imagesCount - 1)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                        aria-label="Previous image"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setCurrentImageIndex(i => i < imagesCount - 1 ? i + 1 : 0)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                        aria-label="Next image"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white bg-black/50 px-2 py-1 rounded">
+                        {currentImageIndex + 1} / {imagesCount}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
               <div className="p-4">
@@ -410,7 +432,7 @@ export default function PostDetailPage() {
                   ) : comments.length > 0 ? (
                     comments.map((comment) => (
                       <div key={comment.id} className="py-3 border-t border-border-gray">
-                        <CommentItem comment={comment} onReply={handleReply} onUpdateComment={updateCommentReaction} />
+                        <CommentItem comment={comment} onReply={handleReply} onUpdateComment={updateCommentReaction} onDeleteComment={deleteComment} currentUserId={user?.id} postAuthorId={post?.author?.id} />
                       </div>
                     ))
                   ) : (
