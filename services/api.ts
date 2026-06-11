@@ -230,9 +230,10 @@ export const decodeToken = (token: string) => {
 
 export const getFileUrl = (fileName?: string) => {
   if (!fileName) return "";
-  const endpoint = process.env.NEXT_PUBLIC_MINIO_ENDPOINT || "localhost";
-  const port = process.env.NEXT_PUBLIC_MINIO_PORT || "9000";
-  const bucket = process.env.NEXT_PUBLIC_MINIO_BUCKET || "social";
-  const endpointWithPort = endpoint.includes(":") ? endpoint : `${endpoint}:${port}`;
-  return `http://${endpointWithPort}/${bucket}/${fileName}`;
+  const publicUrl = process.env.NEXT_PUBLIC_STORAGE_PUBLIC_URL;
+  if (publicUrl) {
+    return `${publicUrl}/${fileName}`;
+  }
+  // fallback: nếu chưa set env, trả về URL upload local
+  return `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/uploads/${fileName}`;
 };
