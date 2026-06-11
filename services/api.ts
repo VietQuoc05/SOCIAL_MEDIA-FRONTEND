@@ -144,11 +144,16 @@ export const usersApi = {
       contentType: file.type,
     });
 
-    await fetch(presigned.url, {
+    const uploadRes = await fetch(presigned.url, {
       method: "PUT",
       headers: { "Content-Type": file.type },
       body: file,
     });
+
+    if (!uploadRes.ok) {
+      const text = await uploadRes.text().catch(() => "Upload failed");
+      throw new Error(`S3 upload failed (${uploadRes.status}): ${text}`);
+    }
 
     return api.patch<User>("/users/me", { avatar: presigned.key });
   },
@@ -158,11 +163,16 @@ export const usersApi = {
       contentType: file.type,
     });
 
-    await fetch(presigned.url, {
+    const uploadRes = await fetch(presigned.url, {
       method: "PUT",
       headers: { "Content-Type": file.type },
       body: file,
     });
+
+    if (!uploadRes.ok) {
+      const text = await uploadRes.text().catch(() => "Upload failed");
+      throw new Error(`S3 upload failed (${uploadRes.status}): ${text}`);
+    }
 
     return api.patch<User>("/users/me", { cover: presigned.key });
   },
