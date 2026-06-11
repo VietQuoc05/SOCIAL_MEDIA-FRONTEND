@@ -138,15 +138,33 @@ export const usersApi = {
   search: (q: string) => api.get<User[]>(`/users/search?q=${encodeURIComponent(q)}`),
   updateProfile: (data: { username?: string; displayName?: string; bio?: string }) =>
     api.patch<User>("/users/me", data),
-  uploadAvatar: (file: File) => {
-    const fd = new FormData();
-    fd.append("avatar", file);
-    return api.patchForm<User>("/users/me", fd);
+  uploadAvatar: async (file: File) => {
+    const presigned = await api.post<{ key: string; url: string }>("/upload/presign", {
+      fileName: file.name,
+      contentType: file.type,
+    });
+
+    await fetch(presigned.url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    return api.patch<User>("/users/me", { avatar: presigned.key });
   },
-  uploadCover: (file: File) => {
-    const fd = new FormData();
-    fd.append("cover", file);
-    return api.patchForm<User>("/users/me", fd);
+  uploadCover: async (file: File) => {
+    const presigned = await api.post<{ key: string; url: string }>("/upload/presign", {
+      fileName: file.name,
+      contentType: file.type,
+    });
+
+    await fetch(presigned.url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    return api.patch<User>("/users/me", { cover: presigned.key });
   },
 };
 
@@ -209,11 +227,22 @@ export const postsApi = {
     api.get<{ data: Post[]; nextCursor: string | null; hasMore: boolean }>(
       `/posts/feed${cursor ? `?cursor=${encodeURIComponent(cursor)}&limit=${limit}` : `?limit=${limit}`}`,
     ),
-  createPost: (caption: string, files: File[]) => {
-    const fd = new FormData();
-    fd.append("caption", caption);
-    files.forEach(f => fd.append("images", f));
-    return api.postForm<Post>("/posts", fd);
+  createPost: async (caption: string, files: File[]) => {
+    const keys: string[] = [];
+    for (const file of files) {
+      const presigned = await api.post<{ key: string; url: string }>("/upload/presign", {
+        fileName: file.name,
+        contentType: file.type,
+      });
+      await fetch(presigned.url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      keys.push(presigned.key);
+    }
+
+    return api.post<Post>("/posts", { caption, images: keys });
   },
   deletePost: (id: string) => api.del(`/posts/${id}`),
 };
@@ -230,6 +259,9 @@ export const decodeToken = (token: string) => {
 
 export const getFileUrl = (fileName?: string) => {
   if (!fileName) return "";
+  if (fileName.startsWith('http://') || fileName.startsWith('https://')) {
+    return fileName;
+  }
   const publicUrl = process.env.NEXT_PUBLIC_STORAGE_PUBLIC_URL;
   if (publicUrl) {
     return `${publicUrl}/${fileName}`;
