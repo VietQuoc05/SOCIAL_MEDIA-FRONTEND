@@ -91,7 +91,7 @@ function ProfileContent() {
     load();
   }, [router, userId]);
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -102,7 +102,9 @@ function ProfileContent() {
     try {
       const updated = (await usersApi.uploadAvatar(file)) as User;
       setMe(updated);
-  
+      if (!userId || userId === me?.id) {
+        setUser(updated);
+      }
       setUploadSuccess("Avatar updated");
     } catch {
       setUploadError("Failed to upload avatar");
@@ -123,6 +125,9 @@ function ProfileContent() {
     try {
       const updated = (await usersApi.uploadCover(file)) as User;
       setMe(updated);
+      if (!userId || userId === me?.id) {
+        setUser(updated);
+      }
       setUploadSuccess("Cover updated");
     } catch {
       setUploadError("Failed to upload cover");
