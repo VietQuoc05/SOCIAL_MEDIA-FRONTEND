@@ -139,42 +139,16 @@ export const usersApi = {
   updateProfile: (data: { username?: string; displayName?: string; bio?: string }) =>
     api.patch<User>("/users/me", data),
   uploadAvatar: async (file: File) => {
-    const presigned = await api.post<{ key: string; url: string }>("/upload/presign", {
-      fileName: file.name,
-      contentType: file.type,
-    });
-
-    const uploadRes = await fetch(presigned.url, {
-      method: "PUT",
-      headers: { "Content-Type": file.type },
-      body: file,
-    });
-
-    if (!uploadRes.ok) {
-      const text = await uploadRes.text().catch(() => "Upload failed");
-      throw new Error(`S3 upload failed (${uploadRes.status}): ${text}`);
-    }
-
-    return api.patch<User>("/users/me", { avatar: presigned.key });
+    const formData = new FormData();
+    formData.append("file", file);
+    const result = await api.postForm<{ key: string; url: string }>("/upload/file", formData);
+    return api.patch<User>("/users/me", { avatar: result.key });
   },
   uploadCover: async (file: File) => {
-    const presigned = await api.post<{ key: string; url: string }>("/upload/presign", {
-      fileName: file.name,
-      contentType: file.type,
-    });
-
-    const uploadRes = await fetch(presigned.url, {
-      method: "PUT",
-      headers: { "Content-Type": file.type },
-      body: file,
-    });
-
-    if (!uploadRes.ok) {
-      const text = await uploadRes.text().catch(() => "Upload failed");
-      throw new Error(`S3 upload failed (${uploadRes.status}): ${text}`);
-    }
-
-    return api.patch<User>("/users/me", { cover: presigned.key });
+    const formData = new FormData();
+    formData.append("file", file);
+    const result = await api.postForm<{ key: string; url: string }>("/upload/file", formData);
+    return api.patch<User>("/users/me", { cover: result.key });
   },
 };
 
@@ -240,16 +214,10 @@ export const postsApi = {
   createPost: async (caption: string, files: File[]) => {
     const keys: string[] = [];
     for (const file of files) {
-      const presigned = await api.post<{ key: string; url: string }>("/upload/presign", {
-        fileName: file.name,
-        contentType: file.type,
-      });
-      await fetch(presigned.url, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      keys.push(presigned.key);
+      const formData = new FormData();
+      formData.append("file", file);
+      const result = await api.postForm<{ key: string; url: string }>("/upload/file", formData);
+      keys.push(result.key);
     }
 
     return api.post<Post>("/posts", { caption, images: keys });
