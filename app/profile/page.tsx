@@ -147,7 +147,11 @@ const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header user={me} />
+      <Header user={me} onPostCreated={() => {
+          if (!userId || userId === me?.id) {
+            postsApi.getMyPosts().then((myPosts) => setPosts(myPosts || []));
+          }
+        }} />
 
       <main className="flex-1">
         <div className="max-w-screen-lg mx-auto px-4 py-6">
