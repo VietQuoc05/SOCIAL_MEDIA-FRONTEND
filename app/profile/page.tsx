@@ -279,7 +279,7 @@ const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                             try {
                               await followApi.follow(userId);
                               setFollowing(true);
-                              setFollowStats(s => s ? { ...s, following: (s.following || 0) + 1 } : null);
+                               setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
                             } catch {
                             }
                           }}
