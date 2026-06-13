@@ -131,11 +131,14 @@ export default function HomePage() {
             </div>
           ) : (
             posts.map((post) => (
-              <article key={post.id} className="bg-surface rounded-[8px] overflow-hidden">
+              <article key={post.id} className="bg-surface rounded-[8px] overflow-hidden cursor-pointer" onClick={() => router.push(`/posts/${post.id}`)}>
                 <div className="flex items-center gap-3 p-3">
                   <div
-                    className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0 cursor-pointer"
-                    onClick={() => post.author && router.push(`/profile?userId=${post.author.id}`)}
+                    className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      post.author && router.push(`/profile?userId=${post.author.id}`);
+                    }}
                   >
                     {post.author?.avatar ? (
                       <img src={getFileUrl(post.author.avatar) || ""} alt="avatar" className="w-full h-full object-cover" />
@@ -145,7 +148,10 @@ export default function HomePage() {
                       </svg>
                     )}
                   </div>
-                  <div className="flex flex-col cursor-pointer" onClick={() => post.author && router.push(`/profile?userId=${post.author.id}`)}>
+                  <div className="flex flex-col" onClick={(e) => {
+                    e.stopPropagation();
+                    post.author && router.push(`/profile?userId=${post.author.id}`);
+                  }}>
                     <span className="text-sm text-text-base font-bold normal-case">{post.author?.displayName || post.author?.username || "Unknown"}</span>
                     <span className="text-xs text-text-secondary normal-case">@{post.author?.username || "unknown"}</span>
                   </div>
@@ -169,7 +175,10 @@ export default function HomePage() {
                 <div className="p-3">
                   <div className="flex items-center gap-4">
                     <button
-                      onClick={() => handleReact(post.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReact(post.id);
+                      }}
                       disabled={reactingPostId === post.id}
                       className={`flex items-center gap-1 transition-colors ${post.isLiked ? 'text-like-pink' : 'text-text-secondary'} hover:text-like-pink disabled:opacity-50`}
                     >
@@ -179,7 +188,10 @@ export default function HomePage() {
                       <span className="text-xs">{post.totalReactions || 0}</span>
                     </button>
                     <button
-                      onClick={() => router.push(`/posts/${post.id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/posts/${post.id}`);
+                      }}
                       className="flex items-center gap-1 text-text-secondary hover:text-text-base transition-colors"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
