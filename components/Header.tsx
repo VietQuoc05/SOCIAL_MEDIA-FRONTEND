@@ -40,7 +40,6 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
         setSearchResults([]);
         return;
       }
-
       setSearchLoading(true);
       try {
         const results = await usersApi.search(searchQuery);
@@ -51,7 +50,6 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
         setSearchLoading(false);
       }
     };
-
     const timeout = setTimeout(search, 300);
     return () => clearTimeout(timeout);
   }, [searchQuery]);
@@ -59,12 +57,6 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     router.replace("/login");
-  };
-
-  const handleSearchClick = () => {
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
   };
 
   const handleHomeClick = () => {
@@ -77,7 +69,7 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 bg-surface border-b border-border-gray px-4 py-3">
-      <div className="flex items-center justify-between max-w-screen-xl mx-auto">
+      <div className="flex items-center justify-between max-w-screen-xl mx-auto gap-2">
         <div className="flex items-center gap-2">
           <h1 className="text-text-base text-base font-bold uppercase tracking-wider">
             Social Media
@@ -93,7 +85,7 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
           </button>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className="relative">
             <button
               onClick={() => setShowPostModal(true)}
@@ -106,14 +98,15 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
             </button>
             <CreatePostModal open={showPostModal} onClose={() => setShowPostModal(false)} onSuccess={handlePostCreated} />
           </div>
-          <div className="relative hidden sm:block" ref={searchRef}>
+
+          <div className="relative" ref={searchRef}>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={handleSearchClick}
+              onFocus={() => searchQuery.trim() && router.push(`/search?q=${encodeURIComponent(searchQuery)}`)}
               placeholder="Search..."
-              className="w-32 md:w-48 h-8 px-3 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
+              className="w-28 md:w-40 lg:w-48 h-8 px-3 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
             />
             {(searchQuery || searchResults.length > 0) && (
               <div className="absolute left-0 mt-1 w-64 bg-surface-elevated border border-border-gray rounded-[6px] shadow-lg z-50 max-h-80 overflow-y-auto">
@@ -170,16 +163,6 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
             )}
           </div>
 
-          {user && (
-            <div className="hidden md:flex flex-col text-right">
-              <span className="text-sm text-text-base font-bold normal-case leading-tight">
-                {user.displayName || user.username}
-              </span>
-              <span className="text-xs text-text-secondary normal-case leading-tight">
-                {user.username}
-              </span>
-            </div>
-          )}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(prev => !prev)}

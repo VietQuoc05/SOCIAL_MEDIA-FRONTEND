@@ -67,7 +67,7 @@ export default function CreatePostModal({ open, onClose, onSuccess }: CreatePost
   return (
     <div
       ref={panelRef}
-      className="absolute top-full mt-2 right-0 w-[calc(100vw-2rem)] sm:w-96 bg-surface-elevated border border-border-gray rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] z-50"
+      className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] sm:w-96 sm:left-auto sm:translate-x-0 sm:right-0 bg-surface-elevated border border-border-gray rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] z-50"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-gray">
         <h2 className="text-text-base text-base font-bold uppercase tracking-wider">Create Post</h2>
