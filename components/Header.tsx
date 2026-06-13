@@ -106,14 +106,14 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
             </button>
             <CreatePostModal open={showPostModal} onClose={() => setShowPostModal(false)} onSuccess={handlePostCreated} />
           </div>
-          <div className="relative" ref={searchRef}>
+          <div className="relative hidden sm:block" ref={searchRef}>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={handleSearchClick}
               placeholder="Search..."
-              className="w-48 h-8 px-3 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
+              className="w-32 md:w-48 h-8 px-3 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
             />
             {(searchQuery || searchResults.length > 0) && (
               <div className="absolute left-0 mt-1 w-64 bg-surface-elevated border border-border-gray rounded-[6px] shadow-lg z-50 max-h-80 overflow-y-auto">
@@ -171,7 +171,7 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
           </div>
 
           {user && (
-            <div className="flex flex-col text-right">
+            <div className="hidden md:flex flex-col text-right">
               <span className="text-sm text-text-base font-bold normal-case leading-tight">
                 {user.displayName || user.username}
               </span>
