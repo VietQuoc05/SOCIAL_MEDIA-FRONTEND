@@ -377,7 +377,7 @@ function ProfileContent() {
                         <div
                           key={post.id}
                           className="aspect-square bg-surface-elevated overflow-hidden cursor-pointer"
-                          onClick={() => router.push(`/posts/${post.id}`)}
+                          onClick={() => router.push(`/post-detail?postId=${post.id}`)}
                         >
                           {imageUrl ? (
                             <img
