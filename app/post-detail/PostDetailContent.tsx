@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { postsApi, getFileUrl, Post, User, usersApi, reactionsApi, commentsApi, Comment } from "@/services/api";
 import Header from "@/components/Header";
 
@@ -121,12 +121,12 @@ function CommentItem({ comment, depth = 0, onReply, onUpdateComment, onDeleteCom
   );
 }
 
-export default function PostDetailPage() {
+export default function PostDetailContent() {
   const router = useRouter();
-  const params = useParams();
-  const postId = params.id as string;
-  const [post, setPost] = useState<Post | null>(null);
+  const searchParams = useSearchParams();
+  const postId = searchParams.get('postId') || "";
   const [user, setUser] = useState<User | null>(null);
+  const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [reacting, setReacting] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -142,6 +142,11 @@ export default function PostDetailPage() {
     const token = localStorage.getItem("token");
     if (!token) {
       router.replace("/login");
+      return;
+    }
+
+    if (!postId) {
+      router.replace("/home");
       return;
     }
 

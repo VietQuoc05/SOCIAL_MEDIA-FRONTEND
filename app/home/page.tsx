@@ -142,7 +142,10 @@ export default function HomePage() {
             </div>
           ) : (
             posts.map((post) => (
-              <article key={post.id} className="bg-surface rounded-[8px] overflow-hidden cursor-pointer" onClick={() => router.push(`/posts/${post.id}`)}>
+              <article key={post.id} className="bg-surface rounded-[8px] overflow-hidden cursor-pointer" onClick={(e) => {
+                if ((e.target as HTMLElement).closest('button')) return;
+                router.push(`/post-detail?postId=${post.id}`);
+              }}>
                 <div className="flex items-center gap-3 p-3">
                   <div
                     className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0"
@@ -227,7 +230,7 @@ export default function HomePage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.push(`/posts/${post.id}`);
+                        router.push(`/post-detail?postId=${post.id}`);
                       }}
                       className="flex items-center gap-1 text-text-secondary hover:text-text-base transition-colors"
                     >

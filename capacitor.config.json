@@ -1,0 +1,25 @@
+{
+  "appId": "com.socialmedia.app",
+  "appName": "Social Media",
+  "webDir": "out",
+  "server": {
+    "androidScheme": "https",
+    "url": "https://social-frontend-tau.vercel.app"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "backgroundColor": "#000000",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "androidSpinnerStyle": "large",
+      "iosSpinnerStyle": "medium",
+      "spinnerColor": "#ffffff"
+    },
+    "StatusBar": {
+      "style": "LIGHT",
+      "backgroundColor": "#000000"
+    }
+  }
+}
