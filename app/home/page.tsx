@@ -21,6 +21,7 @@ export default function HomePage() {
   const [hasMore, setHasMore] = useState(false);
   const [reactingPostId, setReactingPostId] = useState<string | null>(null);
   const [imageErrorPostId, setImageErrorPostId] = useState<string | null>(null);
+  const [imageIndexMap, setImageIndexMap] = useState<Record<string, number>>({});
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -111,6 +112,16 @@ export default function HomePage() {
     setImageErrorPostId(postId);
   };
 
+  const handleImageNav = (postId: string, direction: 'prev' | 'next', total: number) => {
+    setImageIndexMap(prev => {
+      const current = prev[postId] || 0;
+      let next = direction === 'next' ? current + 1 : current - 1;
+      if (next < 0) next = total - 1;
+      if (next >= total) next = 0;
+      return { ...prev, [postId]: next };
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -160,11 +171,37 @@ export default function HomePage() {
                 {post.images && post.images.length > 0 && imageErrorPostId !== post.id ? (
                   <div className="relative bg-black">
                     <img
-                      src={getFileUrl(post.images[0]) || ""}
+                      src={getFileUrl(post.images[imageIndexMap[post.id] || 0]) || ""}
                       alt="post"
                       className="w-full max-h-[600px] object-contain"
                       onError={() => handleImageError(post.id)}
                     />
+                    {post.images.length > 1 && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleImageNav(post.id, 'prev', post.images.length);
+                          }}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleImageNav(post.id, 'next', post.images.length);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </>
+                    )}
                   </div>
                 ) : (
                   post.images && post.images.length === 0 && (
