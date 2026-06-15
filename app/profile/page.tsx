@@ -91,7 +91,7 @@ function ProfileContent() {
     load();
   }, [router, userId]);
 
-const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -185,20 +185,20 @@ const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
             />
 
             <div className="px-4 sm:px-6 pt-12 sm:pt-16 pb-6">
-              <div className="flex items-end gap-4 sm:gap-6">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
                 <div
                   className="relative -mt-4 sm:-mt-6 cursor-pointer"
                   onClick={() => avatarInputRef.current?.click()}
                   title="Click to change avatar"
                 >
                   <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-surface bg-surface-elevated overflow-hidden">
-{user?.avatar ? (
-                        <img
-                          src={getFileUrl(user.avatar) || undefined}
-                          alt="avatar"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
+                    {user?.avatar ? (
+                      <img
+                        src={getFileUrl(user.avatar) || undefined}
+                        alt="avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <svg
                           className="w-12 h-12 text-text-secondary"
@@ -226,8 +226,80 @@ const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   onChange={handleAvatarChange}
                 />
 
-                <div className="flex-1 pt-4">
-                  <div className="flex items-center justify-between">
+                <div className="flex-1 pt-4 sm:pt-4">
+                  <div className="flex flex-col gap-2 sm:hidden">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-base text-text-secondary normal-case">
+                          {user?.username}
+                        </p>
+                        <h2 className="text-text-base text-lg font-bold normal-case">
+                          {user?.displayName || user?.username}
+                        </h2>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={handleOpenFollowing}
+                          className="text-center"
+                        >
+                          <span className="text-text-base font-bold normal-case">
+                            {followStats?.following ?? user?.followingCount ?? 0}
+                          </span>
+                          <span className="block text-xs text-text-secondary normal-case">
+                            Following
+                          </span>
+                        </button>
+                        <button
+                          onClick={handleOpenFollowers}
+                          className="text-center"
+                        >
+                          <span className="text-text-base font-bold normal-case">
+                            {followStats?.followers ?? user?.followersCount ?? 0}
+                          </span>
+                          <span className="block text-xs text-text-secondary normal-case">
+                            Followers
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-start justify-between gap-4">
+                      <p className="text-sm text-text-base normal-case">
+                        {user?.bio || "No bio yet"}
+                      </p>
+                      <div className="flex justify-end">
+                        {!userId || userId === me?.id ? (
+                          <button
+                            onClick={() => router.push("/edit-profile")}
+                            className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                          >
+                            Edit
+                          </button>
+                        ) : following ? (
+                          <button
+                            onClick={() => setShowUnfollowConfirm(true)}
+                            className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                          >
+                            Followed
+                          </button>
+                        ) : (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await followApi.follow(userId);
+                                setFollowing(true);
+                                 setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
+                              } catch {
+                              }
+                            }}
+                            className="h-7 px-3 rounded-full bg-sp-green border border-sp-green text-white text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:bg-sp-green/90"
+                          >
+                            Follow
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex sm:items-center sm:justify-between gap-3">
                     <div>
                       <p className="text-base text-text-secondary normal-case">
                         {user?.username}
@@ -290,8 +362,7 @@ const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                       )}
                     </div>
                   </div>
-
-                  <p className="mt-3 text-sm text-text-base normal-case">
+                  <p className="hidden sm:block mt-3 text-sm text-text-base normal-case">
                     {user?.bio || "No bio yet"}
                   </p>
                 </div>
