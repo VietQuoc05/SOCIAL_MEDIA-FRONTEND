@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { postsApi } from "@/services/api";
@@ -9,10 +9,16 @@ interface CreatePostModalProps {
   onSuccess: () => void;
 }
 
+interface PreviewFile {
+  file: File;
+  preview: string;
+}
+
 export default function CreatePostModal({ open, onClose, onSuccess }: CreatePostModalProps) {
   const [caption, setCaption] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<PreviewFile[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -34,13 +40,30 @@ export default function CreatePostModal({ open, onClose, onSuccess }: CreatePost
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  const readFileAsDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || []);
     const remaining = 10 - files.length;
     if (remaining <= 0) return;
-    setFiles(prev => [...prev, ...selected.slice(0, remaining)]);
+    const sliced = selected.slice(0, remaining);
+    const withPreview: PreviewFile[] = [];
+    for (const file of sliced) {
+      try {
+        const preview = await readFileAsDataURL(file);
+        withPreview.push({ file, preview });
+      } catch {
+        // skip unreadable file
+      }
+    }
+    setFiles(prev => [...prev, ...withPreview]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -51,18 +74,21 @@ export default function CreatePostModal({ open, onClose, onSuccess }: CreatePost
   const handleSubmit = async () => {
     if (!caption.trim() && files.length === 0) return;
     setSubmitting(true);
+    setError("");
     try {
-      await postsApi.createPost(caption.trim(), files);
+      await postsApi.createPost(caption.trim(), files.map(f => f.file));
       setCaption("");
       setFiles([]);
       onSuccess();
       onClose();
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : "Failed to create post");
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (!open) return null;
 
   return (
     <div
@@ -96,11 +122,13 @@ export default function CreatePostModal({ open, onClose, onSuccess }: CreatePost
           </button>
         </div>
 
+        {error && <p className="text-xs text-negative-red">{error}</p>}
+
         {files.length > 0 && (
           <div className="grid grid-cols-5 gap-2">
             {files.map((f, i) => (
-              <div key={i} className="relative aspect-square bg-surface-elevated border border-border-gray rounded-[6px] overflow-hidden group">
-                <img src={URL.createObjectURL(f)} alt={f.name} className="w-full h-full object-cover" />
+              <div key={`${f.file.name}-${i}`} className="relative aspect-square bg-surface-elevated border border-border-gray rounded-[6px] overflow-hidden group">
+                <img src={f.preview} alt={f.file.name} className="w-full h-full object-cover" />
                 <button
                   onClick={() => removeFile(i)}
                   className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center bg-black/70 rounded-full text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity leading-none"
