@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { postsApi, getFileUrl, Post, User, usersApi, reactionsApi, commentsApi, Comment } from "@/services/api";
 import Header from "@/components/Header";
+import { socket } from "@/services/socket";
 
 function CommentItem({ comment, depth = 0, onReply, onUpdateComment, onDeleteComment, currentUserId, postAuthorId }: { comment: Comment; depth?: number; onReply: (parentId: string) => void; onUpdateComment: (commentId: string, isLiked: boolean, totalReactions: number) => void; onDeleteComment: (commentId: string) => void; currentUserId?: string; postAuthorId?: string }) {
   const router = useRouter();
@@ -181,6 +182,78 @@ export default function PostDetailContent() {
       }
     };
     loadComments();
+  }, [postId]);
+
+  useEffect(() => {
+    if (!postId) return;
+
+    const handleNewComment = (data: { deleted?: boolean; commentId?: string; postId?: string }) => {
+      if (data.postId && data.postId === postId) {
+        if (data.deleted) {
+          setComments(prev => prev.filter(c => c.id !== data.commentId));
+        }
+        commentsApi.getByPost(postId).then((comments) => {
+          setComments(comments || []);
+        }).catch(() => {});
+      }
+    };
+
+    const handleReactionUpdate = (data: { postId?: string; commentId?: string; action: string }) => {
+      setPost(prev => {
+        if (!prev) return prev;
+        if (data.postId && data.postId === prev.id) {
+          const wasLiked = prev.isLiked;
+          return {
+            ...prev,
+            isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : wasLiked,
+            totalReactions: data.action === 'created' 
+              ? (prev.totalReactions || 0) + 1 
+              : data.action === 'removed' 
+                ? Math.max((prev.totalReactions || 1) - 1, 0) 
+                : prev.totalReactions,
+          };
+        }
+        return prev;
+      });
+      if (data.commentId) {
+        setComments(prev => prev.map(c => {
+          if (c.id === data.commentId) {
+            return {
+              ...c,
+              isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : c.isLiked,
+              totalReactions: data.action === 'created' 
+                ? (c.totalReactions || 0) + 1 
+                : data.action === 'removed' 
+                  ? Math.max((c.totalReactions || 1) - 1, 0) 
+                  : c.totalReactions,
+            };
+          }
+          if (c.replies) {
+            return {
+              ...c,
+              replies: c.replies.map(r => r.id === data.commentId ? {
+                ...r,
+                isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : r.isLiked,
+                totalReactions: data.action === 'created' 
+                  ? (r.totalReactions || 0) + 1 
+                  : data.action === 'removed' 
+                    ? Math.max((r.totalReactions || 1) - 1, 0) 
+                    : r.totalReactions,
+              } : r)
+            };
+          }
+          return c;
+        }));
+      }
+    };
+
+    socket.on('new_comment', handleNewComment);
+    socket.on('reaction_update', handleReactionUpdate);
+
+    return () => {
+      socket.off('new_comment', handleNewComment);
+      socket.off('reaction_update', handleReactionUpdate);
+    };
   }, [postId]);
 
   const updateCommentReaction = (commentId: string, isLiked: boolean, totalReactions: number) => {

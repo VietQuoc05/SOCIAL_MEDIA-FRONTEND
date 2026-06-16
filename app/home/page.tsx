@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { User, Post, getFileUrl, postsApi, reactionsApi, usersApi } from "@/services/api";
 import Header from "@/components/Header";
+import { socket } from "@/services/socket";
 
 interface FeedResponse {
   data: Post[];
@@ -57,6 +58,38 @@ export default function HomePage() {
 
     load();
   }, [router, loadFeed]);
+
+  useEffect(() => {
+    const handleReactionUpdate = (data: { postId: string; action: string }) => {
+      setPosts(prev => prev.map(p => {
+        if (p.id === data.postId) {
+          const wasLiked = p.isLiked;
+          return {
+            ...p,
+            isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : wasLiked,
+            totalReactions: data.action === 'created' 
+              ? (p.totalReactions || 0) + 1 
+              : data.action === 'removed' 
+                ? Math.max((p.totalReactions || 1) - 1, 0) 
+                : p.totalReactions,
+          };
+        }
+        return p;
+      }));
+    };
+
+    const handlePostCreated = (data: Post) => {
+      setPosts(prev => [data, ...prev]);
+    };
+
+    socket.on('reaction_update', handleReactionUpdate);
+    socket.on('post_created', handlePostCreated);
+
+    return () => {
+      socket.off('reaction_update', handleReactionUpdate);
+      socket.off('post_created', handlePostCreated);
+    };
+  }, []);
 
   useEffect(() => {
     if (!hasMore || loading) return;
