@@ -187,14 +187,15 @@ export default function PostDetailContent() {
   useEffect(() => {
     if (!postId) return;
 
-    const handleNewComment = (data: { deleted?: boolean; commentId?: string; postId?: string }) => {
+    const handleNewComment = (data: { deleted?: boolean; commentId?: string; postId?: string; id?: string }) => {
       if (data.postId && data.postId === postId) {
         if (data.deleted) {
           setComments(prev => prev.filter(c => c.id !== data.commentId));
+        } else {
+          commentsApi.getByPost(postId).then((comments) => {
+            setComments(comments || []);
+          }).catch(() => {});
         }
-        commentsApi.getByPost(postId).then((comments) => {
-          setComments(comments || []);
-        }).catch(() => {});
       }
     };
 
