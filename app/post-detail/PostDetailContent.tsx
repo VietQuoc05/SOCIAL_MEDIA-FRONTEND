@@ -190,7 +190,16 @@ export default function PostDetailContent() {
     const handleNewComment = (data: { deleted?: boolean; commentId?: string; postId?: string; id?: string }) => {
       if (data.postId && data.postId === postId) {
         if (data.deleted) {
-          setComments(prev => prev.filter(c => c.id !== data.commentId));
+          setComments(prev => prev.map(c => {
+            if (c.id === data.commentId) return null as any;
+            if (c.replies) {
+              const filteredReplies = c.replies.filter(r => r.id !== data.commentId);
+              if (filteredReplies.length !== c.replies.length) {
+                return { ...c, replies: filteredReplies };
+              }
+            }
+            return c;
+          }).filter(Boolean) as Comment[]);
         } else {
           commentsApi.getByPost(postId).then((comments) => {
             setComments(comments || []);
@@ -230,6 +239,8 @@ export default function PostDetailContent() {
             };
           }
           if (c.replies) {
+            const hasChanged = c.replies.some(r => r.id === data.commentId);
+            if (!hasChanged) return c;
             return {
               ...c,
               replies: c.replies.map(r => r.id === data.commentId ? {
