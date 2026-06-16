@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "@/app/auth/types/user";
 import { usersApi, getFileUrl, postsApi, Post, followApi, FollowRecord } from "@/services/api";
 import Header from "@/components/Header";
+import { socket } from "@/services/socket";
 
 interface FollowStats {
   followers: number;
@@ -90,6 +91,24 @@ function ProfileContent() {
 
     load();
   }, [router, userId]);
+
+  useEffect(() => {
+    if (!me) return;
+    
+    const targetUserId = userId && userId !== me.id ? userId : me.id;
+    
+    const handlePostCreated = (data: Post) => {
+      if (data.author?.id === targetUserId) {
+        setPosts(prev => [data, ...prev]);
+      }
+    };
+
+    socket.on('post_created', handlePostCreated);
+
+    return () => {
+      socket.off('post_created', handlePostCreated);
+    };
+  }, [userId, me]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
