@@ -82,12 +82,18 @@ export default function HomePage() {
       setPosts(prev => [data, ...prev]);
     };
 
+    const handlePostDeleted = (data: { postId: string }) => {
+      setPosts(prev => prev.filter(p => p.id !== data.postId));
+    };
+
     socket.on('reaction_update', handleReactionUpdate);
     socket.on('post_created', handlePostCreated);
+    socket.on('post_deleted', handlePostDeleted);
 
     return () => {
       socket.off('reaction_update', handleReactionUpdate);
       socket.off('post_created', handlePostCreated);
+      socket.off('post_deleted', handlePostDeleted);
     };
   }, []);
 

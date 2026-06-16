@@ -103,10 +103,16 @@ function ProfileContent() {
       }
     };
 
+    const handlePostDeleted = (data: { postId: string }) => {
+      setPosts(prev => prev.filter(p => p.id !== data.postId));
+    };
+
     socket.on('post_created', handlePostCreated);
+    socket.on('post_deleted', handlePostDeleted);
 
     return () => {
       socket.off('post_created', handlePostCreated);
+      socket.off('post_deleted', handlePostDeleted);
     };
   }, [userId, me]);
 
