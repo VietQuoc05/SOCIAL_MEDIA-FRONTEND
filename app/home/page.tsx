@@ -60,15 +60,14 @@ export default function HomePage() {
   }, [router, loadFeed]);
 
   useEffect(() => {
-    const handleReactionUpdate = (data: { postId: string; action: string }) => {
-      // Socket event chỉ dùng để cập nhật state cho các bài post KHÔNG phải do user hiện tại tương tác.
-      // optimistic update trong handleReact đã xử lý đúng +1/-1, nếu socket chạy tiếp sẽ double-count.
-      // Chỉ update isLiked nếu action là 'removed' để handle trường hợp unlike từ thiết bị khác.
+    const handleReactionUpdate = (data: { postId: string; action: string; totalReactions?: number }) => {
       setPosts(prev => prev.map(p => {
         if (p.id === data.postId) {
           return {
             ...p,
             isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : p.isLiked,
+            // ✅ Dùng totalReactions thực tế từ backend để tránh double-count và giữ đồng bộ giữa các thiết bị
+            totalReactions: data.totalReactions ?? p.totalReactions,
           };
         }
         return p;

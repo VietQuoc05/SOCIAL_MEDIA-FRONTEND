@@ -208,15 +208,15 @@ export default function PostDetailContent() {
       }
     };
 
-    const handleReactionUpdate = (data: { postId?: string; commentId?: string; action: string }) => {
-      // Socket event chỉ update isLiked, không update totalReactions để tránh double-count
-      // với optimistic update trong handleReact/handleCommentReact
+    const handleReactionUpdate = (data: { postId?: string; commentId?: string; action: string; totalReactions?: number }) => {
       setPost(prev => {
         if (!prev) return prev;
         if (data.postId && data.postId === prev.id) {
           return {
             ...prev,
             isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : prev.isLiked,
+            // ✅ Dùng totalReactions thực tế từ backend để đồng bộ giữa các thiết bị
+            totalReactions: data.totalReactions ?? prev.totalReactions,
           };
         }
         return prev;
@@ -227,6 +227,7 @@ export default function PostDetailContent() {
             return {
               ...c,
               isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : c.isLiked,
+              totalReactions: data.totalReactions ?? c.totalReactions,
             };
           }
           if (c.replies) {
@@ -237,6 +238,7 @@ export default function PostDetailContent() {
               replies: c.replies.map(r => r.id === data.commentId ? {
                 ...r,
                 isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : r.isLiked,
+                totalReactions: data.totalReactions ?? r.totalReactions,
               } : r)
             };
           }
