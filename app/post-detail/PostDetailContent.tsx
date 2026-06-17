@@ -209,18 +209,14 @@ export default function PostDetailContent() {
     };
 
     const handleReactionUpdate = (data: { postId?: string; commentId?: string; action: string }) => {
+      // Socket event chỉ update isLiked, không update totalReactions để tránh double-count
+      // với optimistic update trong handleReact/handleCommentReact
       setPost(prev => {
         if (!prev) return prev;
         if (data.postId && data.postId === prev.id) {
-          const wasLiked = prev.isLiked;
           return {
             ...prev,
-            isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : wasLiked,
-            totalReactions: data.action === 'created' 
-              ? (prev.totalReactions || 0) + 1 
-              : data.action === 'removed' 
-                ? Math.max((prev.totalReactions || 1) - 1, 0) 
-                : prev.totalReactions,
+            isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : prev.isLiked,
           };
         }
         return prev;
@@ -231,11 +227,6 @@ export default function PostDetailContent() {
             return {
               ...c,
               isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : c.isLiked,
-              totalReactions: data.action === 'created' 
-                ? (c.totalReactions || 0) + 1 
-                : data.action === 'removed' 
-                  ? Math.max((c.totalReactions || 1) - 1, 0) 
-                  : c.totalReactions,
             };
           }
           if (c.replies) {
@@ -246,11 +237,6 @@ export default function PostDetailContent() {
               replies: c.replies.map(r => r.id === data.commentId ? {
                 ...r,
                 isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : r.isLiked,
-                totalReactions: data.action === 'created' 
-                  ? (r.totalReactions || 0) + 1 
-                  : data.action === 'removed' 
-                    ? Math.max((r.totalReactions || 1) - 1, 0) 
-                    : r.totalReactions,
               } : r)
             };
           }
