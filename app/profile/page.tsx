@@ -627,8 +627,14 @@ function ProfileContent({ userId }: { userId: string | null }) {
 function ProfilePageInner() {
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId');
+  const [routeKey, setRouteKey] = useState(0);
 
-  return <ProfileContent key={userId || 'my-profile'} userId={userId} />;
+  // Force remount when search params change (fixes Next.js cache issue)
+  useEffect(() => {
+    setRouteKey(prev => prev + 1);
+  }, [userId]);
+
+  return <ProfileContent key={routeKey} userId={userId} />;
 }
 
 export default function ProfilePage() {
