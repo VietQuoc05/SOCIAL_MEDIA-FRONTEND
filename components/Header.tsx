@@ -207,7 +207,8 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
                 <button
                   onClick={() => {
                     setMenuOpen(false);
-                    router.push("/profile");
+                    // Use full navigation to bust Next.js RSC cache
+                    window.location.href = "/profile";
                   }}
                   className="w-full text-left px-4 py-3 text-sm text-text-base normal-case hover:bg-surface transition-colors"
                 >
