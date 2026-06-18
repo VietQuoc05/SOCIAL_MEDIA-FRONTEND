@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   User,
@@ -13,7 +13,7 @@ import {
 import Header from "@/components/Header";
 import { socket } from "@/services/socket";
 
-export default function ChatPage() {
+function ChatContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const conversationIdParam = searchParams.get("conversationId");
@@ -518,5 +518,17 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen bg-background">
+        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
+      </div>
+    }>
+      <ChatContent />
+    </Suspense>
   );
 }
