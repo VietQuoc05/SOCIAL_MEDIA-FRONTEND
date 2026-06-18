@@ -440,7 +440,7 @@ export default function ChatPage() {
                                 src={getFileUrl(msg.image) || ""}
                                 alt="sent image"
                                 className="max-w-full rounded mt-1 max-h-48 object-cover cursor-pointer"
-                                onClick={() => window.open(getFileUrl(msg.image) || "", "_blank")}
+                                onClick={() => window.open(getFileUrl(msg.image ?? undefined) || "", "_blank")}
                                 onError={(e) => {
                                   e.currentTarget.style.display = "none";
                                 }}
