@@ -154,12 +154,9 @@ function ChatContent() {
     }
   };
 
-  const handleSendImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !activeConversation) return;
-
+  const uploadAndSendImage = async (file: File) => {
+    if (!activeConversation) return;
     try {
-      // Upload image using the existing upload pattern
       const formData = new FormData();
       formData.append("file", file);
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
@@ -173,13 +170,33 @@ function ChatContent() {
       });
       if (!res.ok) throw new Error("Upload failed");
       const uploadResult = await res.json();
-
       await chatApi.sendMessage(activeConversation, undefined, uploadResult.key);
       scrollToBottom();
     } catch (err) {
       console.error("Failed to send image", err);
     }
+  };
+
+  const handleSendImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeConversation) return;
+    await uploadAndSendImage(file);
     e.target.value = "";
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          await uploadAndSendImage(file);
+        }
+        break;
+      }
+    }
   };
 
   const handleSelectConversation = (convId: string) => {
@@ -441,6 +458,7 @@ function ChatContent() {
                         handleSend();
                       }
                     }}
+                    onPaste={handlePaste}
                     placeholder="Type a message..."
                     className="flex-1 h-9 px-3 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
                   />
