@@ -145,31 +145,8 @@ function ChatContent() {
     const content = text.trim();
     setText("");
     try {
-      const msg = await chatApi.sendMessage(activeConversation, content);
-      setMessages(prev => [...prev, msg]);
+      await chatApi.sendMessage(activeConversation, content);
       scrollToBottom();
-
-      // Update conversation list
-      setConversations(prev => {
-        const updated = prev.map(c => {
-          if (c.id === activeConversation) {
-            return {
-              ...c,
-              lastMessage: content,
-              lastMessageImage: null,
-              lastMessageAt: msg.createdAt,
-              lastSenderId: user?.id || "",
-            };
-          }
-          return c;
-        });
-        updated.sort((a, b) => {
-          const aTime = a.lastMessageAt || a.createdAt;
-          const bTime = b.lastMessageAt || b.createdAt;
-          return new Date(bTime).getTime() - new Date(aTime).getTime();
-        });
-        return updated;
-      });
     } catch (err) {
       console.error("Failed to send message", err);
     } finally {
@@ -197,31 +174,8 @@ function ChatContent() {
       if (!res.ok) throw new Error("Upload failed");
       const uploadResult = await res.json();
 
-      const msg = await chatApi.sendMessage(activeConversation, undefined, uploadResult.key);
-      setMessages(prev => [...prev, msg]);
+      await chatApi.sendMessage(activeConversation, undefined, uploadResult.key);
       scrollToBottom();
-
-      // Update conversation list
-      setConversations(prev => {
-        const updated = prev.map(c => {
-          if (c.id === activeConversation) {
-            return {
-              ...c,
-              lastMessage: "[Image]",
-              lastMessageImage: uploadResult.key,
-              lastMessageAt: msg.createdAt,
-              lastSenderId: user?.id || "",
-            };
-          }
-          return c;
-        });
-        updated.sort((a, b) => {
-          const aTime = a.lastMessageAt || a.createdAt;
-          const bTime = b.lastMessageAt || b.createdAt;
-          return new Date(bTime).getTime() - new Date(aTime).getTime();
-        });
-        return updated;
-      });
     } catch (err) {
       console.error("Failed to send image", err);
     }
