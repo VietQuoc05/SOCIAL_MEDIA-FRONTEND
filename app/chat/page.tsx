@@ -29,6 +29,8 @@ function ChatContent() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [showConvList, setShowConvList] = useState(true);
+  const [previewImage, setPreviewImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -140,12 +142,39 @@ function ChatContent() {
   };
 
   const handleSend = async () => {
-    if (!text.trim() || !activeConversation || sending) return;
+    if ((!text.trim() && !previewImage) || !activeConversation || sending) return;
     setSending(true);
-    const content = text.trim();
-    setText("");
+
     try {
-      await chatApi.sendMessage(activeConversation, content);
+      let imageKey: string | undefined;
+
+      // Upload image first if there is a preview
+      if (previewImage) {
+        const formData = new FormData();
+        formData.append("file", previewImage);
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${baseUrl}/upload/file`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        if (!res.ok) throw new Error("Upload failed");
+        const uploadResult = await res.json();
+        imageKey = uploadResult.key;
+      }
+
+      // Send message with text + image together
+      await chatApi.sendMessage(
+        activeConversation,
+        text.trim() || undefined,
+        imageKey,
+      );
+
+      // Reset
+      setText("");
+      setPreviewImage(null);
+      setPreviewUrl(null);
       scrollToBottom();
     } catch (err) {
       console.error("Failed to send message", err);
@@ -154,33 +183,11 @@ function ChatContent() {
     }
   };
 
-  const uploadAndSendImage = async (file: File) => {
-    if (!activeConversation) return;
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${baseUrl}/upload/file`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const uploadResult = await res.json();
-      await chatApi.sendMessage(activeConversation, undefined, uploadResult.key);
-      scrollToBottom();
-    } catch (err) {
-      console.error("Failed to send image", err);
-    }
-  };
-
-  const handleSendImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSelectImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !activeConversation) return;
-    await uploadAndSendImage(file);
+    if (!file) return;
+    setPreviewImage(file);
+    setPreviewUrl(URL.createObjectURL(file));
     e.target.value = "";
   };
 
@@ -192,16 +199,27 @@ function ChatContent() {
         e.preventDefault();
         const file = item.getAsFile();
         if (file) {
-          await uploadAndSendImage(file);
+          setPreviewImage(file);
+          setPreviewUrl(URL.createObjectURL(file));
         }
         break;
       }
     }
   };
 
+  const handleRemovePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewImage(null);
+    setPreviewUrl(null);
+  };
+
   const handleSelectConversation = (convId: string) => {
     setActiveConversation(convId);
     setShowConvList(false);
+    // Reset preview when switching conversation
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewImage(null);
+    setPreviewUrl(null);
     router.push(`/chat?conversationId=${convId}`, { scroll: false });
   };
 
@@ -231,6 +249,8 @@ function ChatContent() {
       </div>
     );
   }
+
+  const canSend = (text.trim() || previewImage) && !sending;
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -429,48 +449,71 @@ function ChatContent() {
                 )}
               </div>
 
-              {/* Input */}
-              <div className="p-3 border-t border-border-gray bg-surface">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-9 h-9 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base hover:bg-surface-elevated transition-colors flex-shrink-0"
-                    title="Send image"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleSendImage}
-                  />
-                  <input
-                    type="text"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    onPaste={handlePaste}
-                    placeholder="Type a message..."
-                    className="flex-1 h-9 px-3 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
-                  />
-                  <button
-                    onClick={handleSend}
-                    disabled={!text.trim() || sending}
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-sp-green text-white hover:bg-sp-green/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  </button>
+              {/* Input with Preview */}
+              <div className="border-t border-border-gray bg-surface">
+                {/* Image Preview */}
+                {previewUrl && (
+                  <div className="relative p-3 pb-0">
+                    <div className="relative inline-block">
+                      <img
+                        src={previewUrl}
+                        alt="preview"
+                        className="max-h-32 max-w-[200px] rounded object-cover border border-border-gray"
+                      />
+                      <button
+                        onClick={handleRemovePreview}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-surface rounded-full border border-border-gray flex items-center justify-center text-text-secondary hover:text-negative-red transition-colors shadow-sm"
+                        title="Remove image"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="p-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-9 h-9 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base hover:bg-surface-elevated transition-colors flex-shrink-0"
+                      title="Send image"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleSelectImage}
+                    />
+                    <input
+                      type="text"
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                      onPaste={handlePaste}
+                      placeholder="Type a message..."
+                      className="flex-1 h-9 px-3 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
+                    />
+                    <button
+                      onClick={handleSend}
+                      disabled={!canSend}
+                      className="w-9 h-9 flex items-center justify-center rounded-full bg-sp-green text-white hover:bg-sp-green/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </>
