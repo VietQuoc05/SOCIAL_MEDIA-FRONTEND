@@ -28,6 +28,7 @@ function ProfileContent() {
   const [followersList, setFollowersList] = useState<User[]>([]);
   const [followingList, setFollowingList] = useState<User[]>([]);
   const [following, setFollowing] = useState(false);
+  const [isMutualFollow, setIsMutualFollow] = useState(false);
   const [showUnfollowConfirm, setShowUnfollowConfirm] = useState(false);
   const [followStats, setFollowStats] = useState<{ followers: number; following: number } | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -74,6 +75,14 @@ function ProfileContent() {
           setFollowStats({ followers: profileData.followersCount || 0, following: profileData.followingCount || 0 });
           const followingData = (await followApi.getFollowing()) as { following: User }[];
           setFollowing(followingData.some(f => f.following?.id === userId));
+          // Check if target user also follows current user (mutual follow)
+          try {
+            // Get who the target user is following, check if current user is in that list
+            const targetFollowing = await followApi.getFollowing(userId) as FollowRecord[];
+            setIsMutualFollow(targetFollowing.some(f => f.following?.id === data.id));
+          } catch {
+            setIsMutualFollow(false);
+          }
         } else {
           setUser(data);
           const myPosts = (await postsApi.getMyPosts()) as Post[];
@@ -307,17 +316,19 @@ function ProfileContent() {
                           >
                             Followed
                           </button>
-                          <button
-                            onClick={async () => {
-                              try {
-                                const conv = await chatApi.getOrCreateConversation(userId);
-                                router.push(`/chat?conversationId=${conv.id}`);
-                              } catch {}
-                            }}
-                            className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
-                          >
-                            Message
-                          </button>
+                          {isMutualFollow && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const conv = await chatApi.getOrCreateConversation(userId);
+                                  router.push(`/chat?conversationId=${conv.id}`);
+                                } catch {}
+                              }}
+                              className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                            >
+                              Message
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <button
@@ -384,17 +395,19 @@ function ProfileContent() {
                           >
                             Followed
                           </button>
-                          <button
-                            onClick={async () => {
-                              try {
-                                const conv = await chatApi.getOrCreateConversation(userId);
-                                router.push(`/chat?conversationId=${conv.id}`);
-                              } catch {}
-                            }}
-                            className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
-                          >
-                            Message
-                          </button>
+                          {isMutualFollow && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const conv = await chatApi.getOrCreateConversation(userId);
+                                  router.push(`/chat?conversationId=${conv.id}`);
+                                } catch {}
+                              }}
+                              className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                            >
+                              Message
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <button
