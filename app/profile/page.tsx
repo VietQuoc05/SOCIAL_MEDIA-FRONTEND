@@ -12,10 +12,8 @@ interface FollowStats {
   following: number;
 }
 
-function ProfileContent() {
+function ProfileContent({ userId }: { userId: string | null }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const userId = searchParams.get('userId');
   const [me, setMe] = useState<User | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -626,6 +624,13 @@ function ProfileContent() {
   );
 }
 
+function ProfilePageInner() {
+  const searchParams = useSearchParams();
+  const userId = searchParams.get('userId');
+
+  return <ProfileContent key={userId || 'my-profile'} userId={userId} />;
+}
+
 export default function ProfilePage() {
   return (
     <Suspense fallback={
@@ -633,7 +638,7 @@ export default function ProfilePage() {
         <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
       </div>
     }>
-      <ProfileContent />
+      <ProfilePageInner />
     </Suspense>
   );
 }
