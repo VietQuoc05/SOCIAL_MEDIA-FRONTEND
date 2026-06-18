@@ -235,6 +235,45 @@ export const decodeToken = (token: string) => {
   }
 };
 
+export interface Conversation {
+  id: string;
+  otherUser: User;
+  lastMessage: string | null;
+  lastMessageImage: string | null;
+  lastMessageAt: string | null;
+  lastSenderId: string | null;
+  createdAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  sender: User;
+  content: string | null;
+  image: string | null;
+  createdAt: string;
+}
+
+export interface MessagesResponse {
+  data: ChatMessage[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export const chatApi = {
+  getOrCreateConversation: (userId: string) =>
+    api.post<Conversation>(`/chat/conversation/${userId}`, {}),
+  getConversations: () =>
+    api.get<Conversation[]>("/chat/conversations"),
+  getMessages: (conversationId: string, cursor?: string | null, limit = 50) =>
+    api.get<MessagesResponse>(
+      `/chat/messages/${conversationId}${cursor ? `?cursor=${encodeURIComponent(cursor)}&limit=${limit}` : `?limit=${limit}`}`
+    ),
+  sendMessage: (conversationId: string, content?: string, image?: string) =>
+    api.post<ChatMessage>("/chat/message", { conversationId, content, image }),
+};
+
 export const getFileUrl = (fileName?: string) => {
   if (!fileName) return "";
   if (fileName.startsWith('http://') || fileName.startsWith('https://')) {

@@ -70,7 +70,7 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 bg-surface border-b border-border-gray px-4 py-3">
       <div className="flex items-center justify-between max-w-screen-xl mx-auto gap-2">
-        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
           <h1 className="text-text-base text-base font-bold uppercase tracking-wider">
             Social Media
           </h1>
@@ -98,6 +98,16 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
             </button>
             <CreatePostModal open={showPostModal} onClose={() => setShowPostModal(false)} onSuccess={handlePostCreated} />
           </div>
+
+          <button
+            onClick={() => router.push("/chat")}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base hover:bg-surface-elevated transition-colors"
+            title="Messages"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+          </button>
 
           <div className="relative" ref={searchRef}>
             <input

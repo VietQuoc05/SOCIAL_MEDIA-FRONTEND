@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "@/app/auth/types/user";
-import { usersApi, getFileUrl, postsApi, Post, followApi, FollowRecord } from "@/services/api";
+import { usersApi, getFileUrl, postsApi, Post, followApi, FollowRecord, chatApi } from "@/services/api";
 import Header from "@/components/Header";
 import { socket } from "@/services/socket";
 
@@ -299,28 +299,41 @@ function ProfileContent() {
                           >
                             Edit
                           </button>
-                        ) : following ? (
+                      ) : following ? (
+                        <div className="flex items-center gap-2">
                           <button
                             onClick={() => setShowUnfollowConfirm(true)}
                             className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
                           >
                             Followed
                           </button>
-                        ) : (
                           <button
                             onClick={async () => {
                               try {
-                                await followApi.follow(userId);
-                                setFollowing(true);
-                                 setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
-                              } catch {
-                              }
+                                const conv = await chatApi.getOrCreateConversation(userId);
+                                router.push(`/chat?conversationId=${conv.id}`);
+                              } catch {}
                             }}
-                            className="h-7 px-3 rounded-full bg-sp-green border border-sp-green text-white text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:bg-sp-green/90"
+                            className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
                           >
-                            Follow
+                            Message
                           </button>
-                        )}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await followApi.follow(userId);
+                              setFollowing(true);
+                               setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
+                            } catch {
+                            }
+                          }}
+                          className="h-7 px-3 rounded-full bg-sp-green border border-sp-green text-white text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:bg-sp-green/90"
+                        >
+                          Follow
+                        </button>
+                      )}
                       </div>
                     </div>
                   </div>
@@ -364,12 +377,25 @@ function ProfileContent() {
                           Edit
                         </button>
                       ) : following ? (
-                        <button
-                          onClick={() => setShowUnfollowConfirm(true)}
-                          className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
-                        >
-                          Followed
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setShowUnfollowConfirm(true)}
+                            className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                          >
+                            Followed
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const conv = await chatApi.getOrCreateConversation(userId);
+                                router.push(`/chat?conversationId=${conv.id}`);
+                              } catch {}
+                            }}
+                            className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                          >
+                            Message
+                          </button>
+                        </div>
                       ) : (
                         <button
                           onClick={async () => {
