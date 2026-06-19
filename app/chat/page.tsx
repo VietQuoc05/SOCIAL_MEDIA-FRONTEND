@@ -31,6 +31,8 @@ function ChatContent() {
   const [showConvList, setShowConvList] = useState(true);
   const [previewImages, setPreviewImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [typingUser, setTypingUser] = useState<string | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -86,6 +88,59 @@ function ChatContent() {
     };
     loadMessages();
   }, [activeConversation, scrollToBottom]);
+
+  // Listen for typing events
+  useEffect(() => {
+    if (!activeConversation) return;
+
+    const handleTyping = (data: { conversationId: string; displayName: string }) => {
+      if (data.conversationId === activeConversation) {
+        setTypingUser(data.displayName);
+      }
+    };
+
+    const handleStopTyping = () => {
+      setTypingUser(null);
+    };
+
+    socket.on('typing', handleTyping);
+    socket.on('stop_typing', handleStopTyping);
+
+    return () => {
+      socket.off('typing', handleTyping);
+      socket.off('stop_typing', handleStopTyping);
+      setTypingUser(null);
+    };
+  }, [activeConversation]);
+
+  // Emit typing event
+  const emitTyping = useCallback(() => {
+    if (!activeConversation || !user) return;
+    socket.emit('typing', {
+      conversationId: activeConversation,
+      userId: user.id,
+      displayName: user.displayName || user.username,
+    });
+
+    // Clear previous timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Auto stop typing after 3 seconds of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('stop_typing', { conversationId: activeConversation });
+    }, 3000);
+  }, [activeConversation, user]);
+
+  // Cleanup typing timeout
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Listen for new messages via socket
   useEffect(() => {
@@ -201,6 +256,7 @@ function ChatContent() {
     setPreviewImages(prev => [...prev, ...newFiles]);
     setPreviewUrls(prev => [...prev, ...newUrls]);
     e.target.value = "";
+    emitTyping();
   };
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
@@ -223,6 +279,7 @@ function ChatContent() {
       e.preventDefault();
       setPreviewImages(prev => [...prev, ...newFiles]);
       setPreviewUrls(prev => [...prev, ...newUrls]);
+      emitTyping();
     }
   };
 
@@ -388,9 +445,15 @@ function ChatContent() {
                   <span className="text-sm text-text-base font-bold normal-case">
                     {otherUser.displayName || otherUser.username}
                   </span>
-                  <span className="text-xs text-text-secondary normal-case">
-                    @{otherUser.username}
-                  </span>
+                  {typingUser ? (
+                    <span className="text-xs text-sp-green animate-pulse">
+                      {typingUser} is typing...
+                    </span>
+                  ) : (
+                    <span className="text-xs text-text-secondary normal-case">
+                      @{otherUser.username}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -517,7 +580,10 @@ function ChatContent() {
                     <input
                       type="text"
                       value={text}
-                      onChange={(e) => setText(e.target.value)}
+                      onChange={(e) => {
+                        setText(e.target.value);
+                        emitTyping();
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
