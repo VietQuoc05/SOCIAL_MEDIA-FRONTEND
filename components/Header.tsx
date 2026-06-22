@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { User, getFileUrl, usersApi } from "@/services/api";
+import { User, Conversation, getFileUrl, usersApi, chatApi } from "@/services/api";
+import { socket } from "@/services/socket";
 import CreatePostModal from "./CreatePostModal";
 
 interface HeaderProps {
@@ -11,15 +12,74 @@ interface HeaderProps {
   totalUnreadChats?: number;
 }
 
-export default function Header({ user, onPostCreated, totalUnreadChats = 0 }: HeaderProps) {
+export default function Header({ user, onPostCreated, totalUnreadChats: propTotalUnread }: HeaderProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
+
+  // Load initial unread count from API
+  useEffect(() => {
+    if (!user) return;
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const fetchUnread = async () => {
+      try {
+        const convs = await chatApi.getConversations();
+        const total = (convs as any[]).reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+        setUnreadCount(total);
+      } catch {
+        // ignore
+      }
+    };
+    fetchUnread();
+  }, [user]);
+
+  // Listen for new messages via socket (works on ALL pages)
+  useEffect(() => {
+    if (!user) return;
+
+    const handleNewMessage = (data: any) => {
+      // Only increment if message is from someone else
+      if (data.senderId !== user.id) {
+        setUnreadCount(prev => prev + 1);
+      }
+    };
+
+    const handleMessagesRead = (data: { conversationId: string; userId: string }) => {
+      // The current user read messages in another tab/device - need to refetch
+      // We'll just decrement optimistically, but better to refetch
+      if (data.userId === user.id) {
+        // Refetch to get accurate count
+        chatApi.getConversations().then(convs => {
+          const total = (convs as any[]).reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+          setUnreadCount(total);
+        }).catch(() => {});
+      }
+    };
+
+    socket.on("new_message", handleNewMessage);
+    socket.on("messages_read", handleMessagesRead);
+
+    return () => {
+      socket.off("new_message", handleNewMessage);
+      socket.off("messages_read", handleMessagesRead);
+    };
+  }, [user]);
+
+  // Also sync from prop if provided (chat page can pass 0 to clear on entry)
+  useEffect(() => {
+    if (propTotalUnread !== undefined) {
+      setUnreadCount(propTotalUnread);
+    }
+  }, [propTotalUnread]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -110,7 +170,7 @@ export default function Header({ user, onPostCreated, totalUnreadChats = 0 }: He
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
             </button>
-            {totalUnreadChats > 0 && (
+            {unreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-sp-green rounded-full border-2 border-surface" />
             )}
           </div>
