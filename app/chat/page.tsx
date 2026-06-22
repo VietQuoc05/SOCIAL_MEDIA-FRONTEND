@@ -37,6 +37,9 @@ function ChatContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
+  // Total unread across all conversations (for Header badge)
+  const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+
   // Load user & conversations
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -66,6 +69,21 @@ function ChatContent() {
     }, 100);
   }, []);
 
+  // Mark conversation as read when selected
+  const markAsRead = useCallback(async (conversationId: string) => {
+    try {
+      await chatApi.markAsRead(conversationId);
+      // Update local state: set unreadCount to 0 for this conversation
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === conversationId ? { ...c, unreadCount: 0 } : c
+        )
+      );
+    } catch {
+      // Ignore errors
+    }
+  }, []);
+
   // Load messages when active conversation changes
   useEffect(() => {
     if (!activeConversation) {
@@ -79,6 +97,8 @@ function ChatContent() {
         setMessages(res.data || []);
         setNextCursor(res.nextCursor);
         setHasMore(res.hasMore);
+        // Mark as read after loading messages
+        await markAsRead(activeConversation);
       } catch {
         setMessages([]);
       } finally {
@@ -87,7 +107,7 @@ function ChatContent() {
       }
     };
     loadMessages();
-  }, [activeConversation, scrollToBottom]);
+  }, [activeConversation, markAsRead, scrollToBottom]);
 
   // Listen for typing events
   useEffect(() => {
@@ -150,18 +170,28 @@ function ChatContent() {
       if (data.conversationId === activeConversation) {
         setMessages(prev => [...prev, data]);
         scrollToBottom();
+        // Auto-mark as read when receiving a message in the active conversation
+        markAsRead(activeConversation);
       }
 
       // Update conversation list
       setConversations(prev => {
         const updated = prev.map(c => {
           if (c.id === data.conversationId) {
+            // If the active conversation, unreadCount stays 0 (already marked read)
+            // Otherwise, increment unreadCount if the sender is not the current user
+            const newUnread = activeConversation === data.conversationId
+              ? 0
+              : data.senderId !== user?.id
+                ? (c.unreadCount || 0) + 1
+                : c.unreadCount || 0;
             return {
               ...c,
               lastMessage: data.content || (data.image ? "[Image]" : c.lastMessage),
               lastMessageImage: data.image || c.lastMessageImage,
               lastMessageAt: data.createdAt,
               lastSenderId: data.senderId,
+              unreadCount: newUnread,
             };
           }
           return c;
@@ -180,7 +210,45 @@ function ChatContent() {
     return () => {
       socket.off("new_message", handleNewMessage);
     };
-  }, [activeConversation, user]);
+  }, [activeConversation, user, markAsRead, scrollToBottom]);
+
+  // Listen for conversation_updated (when other user reads messages)
+  useEffect(() => {
+    const handleConversationUpdated = (data: Conversation) => {
+      setConversations(prev =>
+        prev.map(c => {
+          if (c.id === data.id) {
+            return {
+              ...c,
+              lastMessage: data.lastMessage,
+              lastMessageImage: data.lastMessageImage,
+              lastMessageAt: data.lastMessageAt,
+              lastSenderId: data.lastSenderId,
+            };
+          }
+          return c;
+        })
+      );
+    };
+
+    socket.on("conversation_updated", handleConversationUpdated);
+    return () => {
+      socket.off("conversation_updated", handleConversationUpdated);
+    };
+  }, []);
+
+  // Listen for messages_read (when other user reads your messages)
+  useEffect(() => {
+    const handleMessagesRead = (data: { conversationId: string; userId: string; readAt: string }) => {
+      // The other user read our messages - we could update UI to show "Seen" status
+      // For now, this event is received but we don't need to change conversations
+    };
+
+    socket.on("messages_read", handleMessagesRead);
+    return () => {
+      socket.off("messages_read", handleMessagesRead);
+    };
+  }, []);
 
   const loadMoreMessages = async () => {
     if (!nextCursor || !activeConversation || loadingMessages) return;
@@ -297,6 +365,8 @@ function ChatContent() {
     setPreviewImages([]);
     setPreviewUrls([]);
     router.push(`/chat?conversationId=${convId}`, { scroll: false });
+    // Mark as read when switching to a conversation
+    markAsRead(convId);
   };
 
   const formatTime = (dateStr: string) => {
@@ -330,7 +400,7 @@ function ChatContent() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <Header user={user} />
+      <Header user={user} totalUnreadChats={totalUnread} />
 
       <div className="flex-1 flex overflow-hidden">
         {/* Conversation List - Desktop sidebar */}
@@ -344,59 +414,82 @@ function ChatContent() {
                 <p className="text-text-secondary text-sm">No conversations yet</p>
               </div>
             ) : (
-              conversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => handleSelectConversation(conv.id)}
-                  className={`w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated transition-colors ${
-                    activeConversation === conv.id ? "bg-surface-elevated" : ""
-                  }`}
-                >
-                  <div className="w-10 h-10 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
-                    {conv.otherUser?.avatar ? (
-                      <img
-                        src={getFileUrl(conv.otherUser.avatar) || ""}
-                        alt="avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <svg
-                        className="w-5 h-5 text-text-secondary m-auto mt-2.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              conversations.map((conv) => {
+                const hasUnread = (conv.unreadCount || 0) > 0;
+                return (
+                  <button
+                    key={conv.id}
+                    onClick={() => handleSelectConversation(conv.id)}
+                    className={`w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated transition-colors ${
+                      activeConversation === conv.id ? "bg-surface-elevated" : ""
+                    }`}
+                  >
+                    <div className="relative w-10 h-10 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
+                      {conv.otherUser?.avatar ? (
+                        <img
+                          src={getFileUrl(conv.otherUser.avatar) || ""}
+                          alt="avatar"
+                          className="w-full h-full object-cover"
                         />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-text-base font-bold normal-case truncate">
-                        {conv.otherUser?.displayName || conv.otherUser?.username || "Unknown"}
-                      </span>
-                      {conv.lastMessageAt && (
-                        <span className="text-xs text-text-secondary flex-shrink-0 ml-2">
-                          {formatTime(conv.lastMessageAt || "")}
+                      ) : (
+                        <svg
+                          className="w-5 h-5 text-text-secondary m-auto mt-2.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                      )}
+                      {/* Unread dot on avatar */}
+                      {hasUnread && (
+                        <span className="absolute top-0 right-0 w-3 h-3 bg-sp-green rounded-full border-2 border-surface" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-sm truncate ${
+                          hasUnread
+                            ? "text-text-base font-bold normal-case"
+                            : "text-text-base normal-case"
+                        }`}>
+                          {conv.otherUser?.displayName || conv.otherUser?.username || "Unknown"}
                         </span>
-                      )}
+                        {conv.lastMessageAt && (
+                          <span className={`text-xs flex-shrink-0 ml-2 ${
+                            hasUnread ? "text-text-base font-bold" : "text-text-secondary"
+                          }`}>
+                            {formatTime(conv.lastMessageAt || "")}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {conv.lastSenderId && conv.lastSenderId === user?.id && (
+                          <span className={`text-xs ${hasUnread ? "text-text-base font-bold" : "text-text-secondary"}`}>You: </span>
+                        )}
+                        <span className={`text-xs truncate ${
+                          hasUnread ? "text-text-base font-bold" : "text-text-secondary"
+                        }`}>
+                          {conv.lastMessageImage ? "[Image]" : conv.lastMessage || "No messages yet"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      {conv.lastSenderId && conv.lastSenderId === user?.id && (
-                        <span className="text-xs text-text-secondary">You: </span>
-                      )}
-                      <span className="text-xs text-text-secondary truncate">
-                        {conv.lastMessageImage ? "[Image]" : conv.lastMessage || "No messages yet"}
-                      </span>
-                    </div>
-                  </div>
-                </button>
-              ))
+                    {/* Unread count badge */}
+                    {hasUnread && (
+                      <div className="flex-shrink-0 w-5 h-5 bg-sp-green rounded-full flex items-center justify-center">
+                        <span className="text-[10px] text-white font-bold">
+                          {conv.unreadCount! > 9 ? "9+" : conv.unreadCount}
+                        </span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
@@ -521,6 +614,9 @@ function ChatContent() {
                             )}
                             <div className={`text-xs mt-1 ${isMine ? "text-white/70" : "text-text-secondary"}`}>
                               {formatTime(msg.createdAt)}
+                              {isMine && msg.readAt && (
+                                <span className="ml-1 text-[10px]">· Seen</span>
+                              )}
                             </div>
                           </div>
                         </div>

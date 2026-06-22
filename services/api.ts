@@ -243,6 +243,7 @@ export interface Conversation {
   lastMessageAt: string | null;
   lastSenderId: string | null;
   createdAt: string;
+  unreadCount?: number;
 }
 
 export interface ChatMessage {
@@ -253,6 +254,7 @@ export interface ChatMessage {
   content: string | null;
   image: string | null;
   createdAt: string;
+  readAt?: string | null;
 }
 
 export interface MessagesResponse {
@@ -272,6 +274,8 @@ export const chatApi = {
     ),
   sendMessage: (conversationId: string, content?: string, image?: string) =>
     api.post<ChatMessage>("/chat/message", { conversationId, content, image }),
+  markAsRead: (conversationId: string) =>
+    api.post<{ success: boolean; readAt: string }>(`/chat/read/${conversationId}`, {}),
 };
 
 export const getFileUrl = (fileName?: string) => {

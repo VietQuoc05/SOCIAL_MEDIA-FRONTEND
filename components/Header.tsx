@@ -8,9 +8,10 @@ import CreatePostModal from "./CreatePostModal";
 interface HeaderProps {
   user: User | null;
   onPostCreated?: () => void;
+  totalUnreadChats?: number;
 }
 
-export default function Header({ user, onPostCreated }: HeaderProps) {
+export default function Header({ user, onPostCreated, totalUnreadChats = 0 }: HeaderProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
@@ -99,15 +100,20 @@ export default function Header({ user, onPostCreated }: HeaderProps) {
             <CreatePostModal open={showPostModal} onClose={() => setShowPostModal(false)} onSuccess={handlePostCreated} />
           </div>
 
-          <button
-            onClick={() => router.push("/chat")}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base hover:bg-surface-elevated transition-colors"
-            title="Messages"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => router.push("/chat")}
+              className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base hover:bg-surface-elevated transition-colors"
+              title="Messages"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </button>
+            {totalUnreadChats > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-sp-green rounded-full border-2 border-surface" />
+            )}
+          </div>
 
           <div className="relative" ref={searchRef}>
             <input
