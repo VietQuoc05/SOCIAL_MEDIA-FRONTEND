@@ -34,12 +34,12 @@ export function AuthForm({ mode }: AuthFormProps) {
   useEffect(() => {
     if (isLogin && success) {
       const timer = setTimeout(() => {
-        router.push("/home");
+        window.location.href = "/home";
       }, 300);
       return () => clearTimeout(timer);
     }
     if (!isLogin && success) {
-      router.push("/login");
+      window.location.href = "/login";
     }
   }, [isLogin, success, router]);
 
