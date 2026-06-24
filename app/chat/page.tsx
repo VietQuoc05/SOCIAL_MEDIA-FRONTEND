@@ -405,7 +405,7 @@ function ChatContent() {
       <div className="flex-1 flex overflow-hidden">
         {/* Conversation List - Desktop sidebar */}
         <div className={`${showConvList ? "block" : "hidden"} md:block w-full md:w-80 lg:w-96 border-r border-border-gray bg-surface flex flex-col`}>
-          <div className="p-4 border-b border-border-gray">
+          <div className="p-3 border-b border-border-gray">
             <h2 className="text-text-base text-base font-bold normal-case">Messages</h2>
           </div>
           <div className="flex-1 overflow-y-auto">
