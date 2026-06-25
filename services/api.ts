@@ -126,10 +126,16 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post<LoginResponse>("/auth/login", { email, password }),
   register: (email: string, username: string, displayName: string, password: string) =>
-    api.post<{ id: string; email: string; username: string; displayName: string }>(
+    api.post<{ id: string; email: string; username: string; displayName: string; message?: string }>(
       "/auth/register",
       { email, username, displayName, password }
     ),
+  verifyEmail: (token: string) =>
+    api.get<{ message: string }>(`/auth/verify?token=${encodeURIComponent(token)}`),
+  forgotPassword: (email: string) =>
+    api.post<{ message: string }>("/auth/forgot-password", { email }),
+  resetPassword: (token: string, password: string) =>
+    api.post<{ message: string }>("/auth/reset-password", { token, password }),
 };
 
 export const usersApi = {

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/services/api";
-import { User } from "@/app/auth/types/user";
 
 type AuthMode = "login" | "register";
 
@@ -39,7 +38,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       return () => clearTimeout(timer);
     }
     if (!isLogin && success) {
-      window.location.href = "/login";
+      // Register success - stay on register page with verify message
     }
   }, [isLogin, success, router]);
 
@@ -78,7 +77,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       } else {
         const normalizedDisplayName = displayName.toLowerCase();
         const result = await authApi.register(email, username, normalizedDisplayName, password);
-        setSuccess("Registration successful. Redirecting to login...");
+        setSuccess("Account created! Please check your email to verify your account.");
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "An error occurred";
@@ -194,6 +193,16 @@ export function AuthForm({ mode }: AuthFormProps) {
       </form>
 
       <div className="mt-6 text-center">
+        {isLogin && (
+          <div className="mb-3">
+            <a
+              href="/forgot-password"
+              className="text-sm text-text-secondary hover:text-sp-green underline underline-offset-4 transition-colors"
+            >
+              Forgot your password?
+            </a>
+          </div>
+        )}
         <p className="text-sm text-text-secondary normal-case">
           {switchLabel}
           <a
