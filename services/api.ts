@@ -134,6 +134,8 @@ export const authApi = {
     api.get<{ message: string }>(`/auth/verify?token=${encodeURIComponent(token)}`),
   forgotPassword: (email: string) =>
     api.post<{ message: string }>("/auth/forgot-password", { email }),
+  resendVerifyEmail: (email: string) =>
+    api.post<{ message: string }>("/auth/resend-verify", { email }),
   resetPassword: (token: string, password: string) =>
     api.post<{ message: string }>("/auth/reset-password", { token, password }),
 };

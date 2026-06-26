@@ -194,14 +194,24 @@ export function AuthForm({ mode }: AuthFormProps) {
 
       <div className="mt-6 text-center">
         {isLogin && (
-          <div className="mb-3">
-            <a
-              href="/forgot-password"
-              className="text-sm text-text-secondary hover:text-sp-green underline underline-offset-4 transition-colors"
-            >
-              Forgot your password?
-            </a>
-          </div>
+          <>
+            <div className="mb-3">
+              <a
+                href="/forgot-password"
+                className="text-sm text-text-secondary hover:text-sp-green underline underline-offset-4 transition-colors"
+              >
+                Forgot your password?
+              </a>
+            </div>
+            <div className="mb-3">
+              <a
+                href="/resend-verify-email"
+                className="text-sm text-text-secondary hover:text-sp-green underline underline-offset-4 transition-colors"
+              >
+                Resend verification email?
+              </a>
+            </div>
+          </>
         )}
         <p className="text-sm text-text-secondary normal-case">
           {switchLabel}
