@@ -167,6 +167,14 @@ export interface FollowRecord {
   createdAt?: string;
 }
 
+export interface SuggestedUser {
+  id: string;
+  username: string;
+  displayName: string;
+  avatar?: string;
+  mutualFriendCount: number;
+}
+
 export const followApi = {
   follow: (id: string) => api.post(`/follow/${id}`, {}),
   unfollow: (id: string) => api.del(`/follow/${id}`),
@@ -175,6 +183,7 @@ export const followApi = {
   getFollowStats: (userId?: string) => userId 
     ? api.get<{ followers: number; following: number }>(`/follow/stats?userId=${userId}`)
     : api.get<{ followers: number; following: number }>("/follow/stats"),
+  getSuggestedUsers: (limit = 5) => api.get<SuggestedUser[]>(`/follow/suggested?limit=${limit}`),
 };
 
 export interface Post {
