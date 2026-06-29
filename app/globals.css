@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
-:root {
+/* ============================
+   DARK THEME (default)
+   ============================ */
+:root,
+.theme-dark {
   --background: #121212;
   --foreground: #ffffff;
   --surface: #181818;
@@ -21,6 +25,32 @@
   --announcement-blue: #539df5;
   --dark-card: #252525;
   --mid-card: #272727;
+}
+
+/* ============================
+   BRIGHT THEME
+   ============================ */
+.theme-bright {
+  --background: #ffffff;
+  --foreground: #000000;
+  --surface: #f5f5f5;
+  --surface-elevated: #ffffff;
+  --text-base: #000000;
+  --text-secondary: #737373;
+  --text-near-white: #333333;
+  --text-light: #111111;
+  --sp-green: #0095f6;
+  --sp-green-border: #0095f6;
+  --border-gray: #dbdbdb;
+  --light-border: #c7c7c7;
+  --separator: #737373;
+  --light-surface: #e8e8e8;
+  --negative-red: #ed4956;
+  --like-pink: #ff2d55;
+  --warning-orange: #ffa42b;
+  --announcement-blue: #0095f6;
+  --dark-card: #fafafa;
+  --mid-card: #efefef;
 }
 
 @theme inline {

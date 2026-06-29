@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { User, Conversation, getFileUrl, usersApi, chatApi } from "@/services/api";
 import { socket } from "@/services/socket";
 import CreatePostModal from "./CreatePostModal";
+import PreferencesModal from "./PreferencesModal";
+import { useTheme } from "./ThemeProvider";
 
 interface HeaderProps {
   user: User | null;
@@ -16,6 +18,7 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [showPreferencesModal, setShowPreferencesModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -158,6 +161,7 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
               </svg>
             </button>
             <CreatePostModal open={showPostModal} onClose={() => setShowPostModal(false)} onSuccess={handlePostCreated} />
+            <PreferencesModal open={showPreferencesModal} onClose={() => setShowPreferencesModal(false)} />
           </div>
 
           <div className="relative">
@@ -269,7 +273,7 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-surface-elevated border border-border-gray rounded-[6px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-44 bg-surface-elevated border border-border-gray rounded-[6px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] overflow-hidden z-50">
                 <button
                   onClick={() => {
                     setMenuOpen(false);
@@ -279,6 +283,20 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
                   className="w-full text-left px-4 py-3 text-sm text-text-base normal-case hover:bg-surface transition-colors"
                 >
                   Profile
+                </button>
+                <div className="h-px bg-border-gray" />
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setShowPreferencesModal(true);
+                  }}
+                  className="w-full text-left px-4 py-3 text-sm text-text-base normal-case hover:bg-surface transition-colors flex items-center justify-between"
+                >
+                  <span>Preferences</span>
+                  <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
                 </button>
                 <div className="h-px bg-border-gray" />
                 <button
