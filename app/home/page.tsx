@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { User, Post, getFileUrl, postsApi, reactionsApi, usersApi } from "@/services/api";
 import Header from "@/components/Header";
 import SuggestedForYou from "@/components/SuggestedForYou";
+import SwitchAccountModal from "@/components/SwitchAccountModal";
 import { socket } from "@/services/socket";
 
 interface FeedResponse {
@@ -24,6 +25,7 @@ export default function HomePage() {
   const [reactingPostId, setReactingPostId] = useState<string | null>(null);
   const [imageErrorPostId, setImageErrorPostId] = useState<string | null>(null);
   const [imageIndexMap, setImageIndexMap] = useState<Record<string, number>>({});
+  const [showSwitchModal, setShowSwitchModal] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -323,10 +325,7 @@ export default function HomePage() {
                     </span>
                   </div>
                   <button
-                    onClick={() => {
-                      localStorage.removeItem("token");
-                      router.replace("/login");
-                    }}
+                    onClick={() => setShowSwitchModal(true)}
                     className="text-xs font-bold text-sp-green hover:text-sp-green/80 transition-colors flex-shrink-0"
                   >
                     Switch
@@ -339,6 +338,8 @@ export default function HomePage() {
           </aside>
         </div>
       </main>
+
+      <SwitchAccountModal open={showSwitchModal} onClose={() => setShowSwitchModal(false)} />
 
       <footer className="bg-surface border-t border-border-gray">
         <div className="max-w-screen-xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
