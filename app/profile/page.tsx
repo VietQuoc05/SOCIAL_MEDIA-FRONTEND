@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "@/app/auth/types/user";
 import { usersApi, getFileUrl, postsApi, Post, followApi, FollowRecord, chatApi } from "@/services/api";
 import Header from "@/components/Header";
+import Modal from "@/components/Modal";
 import { socket } from "@/services/socket";
 
 interface FollowStats {
@@ -31,18 +32,6 @@ function ProfileContent({ userId }: { userId: string | null }) {
   const [followStats, setFollowStats] = useState<{ followers: number; following: number } | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-
-  // Prevent background scroll when any modal is open
-  useEffect(() => {
-    if (showFollowersModal || showFollowingModal || showUnfollowConfirm) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [showFollowersModal, showFollowingModal, showUnfollowConfirm]);
 
   const handleOpenFollowers = async () => {
     try {
@@ -488,136 +477,130 @@ function ProfileContent({ userId }: { userId: string | null }) {
                 </div>
               )}
 
-              {showUnfollowConfirm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                  <div className="bg-surface rounded-[8px] p-6 max-w-sm w-full mx-4 shadow-xl">
-                    <h3 className="text-text-base text-base font-bold mb-2">Unfollow user</h3>
-                    <p className="text-text-secondary text-sm mb-6">
-                      Are you sure you want to unfollow {user?.displayName || user?.username}?
-                    </p>
-                    <div className="flex gap-3 justify-end">
-                      <button
-                        onClick={() => setShowUnfollowConfirm(false)}
-                        className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (!userId) return;
-                          try {
-                            await followApi.unfollow(userId);
-                            setFollowing(false);
-                            setFollowStats(s => s ? { ...s, following: Math.max((s.following || 1) - 1, 0) } : null);
-                          } catch {
-                          } finally {
-                            setShowUnfollowConfirm(false);
-                          }
-                        }}
-                        className="px-4 py-2 text-sm text-white bg-negative-red rounded hover:bg-negative-red/90 transition-colors"
-                      >
-                        Unfollow
-                      </button>
-                    </div>
+              <Modal isOpen={showUnfollowConfirm} onClose={() => setShowUnfollowConfirm(false)} centered>
+                <div className="p-6">
+                  <h3 className="text-text-base text-base font-bold mb-2">Unfollow user</h3>
+                  <p className="text-text-secondary text-sm mb-6">
+                    Are you sure you want to unfollow {user?.displayName || user?.username}?
+                  </p>
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={() => setShowUnfollowConfirm(false)}
+                      className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!userId) return;
+                        try {
+                          await followApi.unfollow(userId);
+                          setFollowing(false);
+                          setFollowStats(s => s ? { ...s, following: Math.max((s.following || 1) - 1, 0) } : null);
+                        } catch {
+                        } finally {
+                          setShowUnfollowConfirm(false);
+                        }
+                      }}
+                      className="px-4 py-2 text-sm text-white bg-negative-red rounded hover:bg-negative-red/90 transition-colors"
+                    >
+                      Unfollow
+                    </button>
                   </div>
                 </div>
-              )}
+              </Modal>
 
-              {showFollowersModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-                  <div className="bg-surface rounded-[8px] p-6 max-w-md w-full mx-4 shadow-xl max-h-[80vh] flex flex-col">
-                    <h3 className="text-text-base text-base font-bold mb-4">Followers</h3>
-                    <div className="flex-1 overflow-y-auto">
-                      {followersList.length === 0 ? (
-                        <p className="text-text-secondary text-sm text-center py-4">No followers yet</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {followersList.map((u) => (
-                            <button
-                              key={u.id}
-                              onClick={() => {
-                                setShowFollowersModal(false);
-                                router.push(`/profile?userId=${u.id}`);
-                              }}
-                              className="flex items-center gap-3 w-full p-2 rounded hover:bg-surface-elevated transition-colors text-left"
-                            >
-                              <div className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
-                                {u.avatar ? (
-                                  <img src={getFileUrl(u.avatar) || ""} alt="avatar" className="w-full h-full object-cover" />
-                                ) : (
-                                  <svg className="w-4 h-4 text-text-secondary m-auto mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                  </svg>
-                                )}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-sm text-text-base font-bold normal-case">{u.displayName || u.username}</span>
-                                <span className="text-xs text-text-secondary normal-case">@{u.username}</span>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        onClick={() => setShowFollowersModal(false)}
-                        className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
-                      >
-                        Close
-                      </button>
-                    </div>
+              <Modal isOpen={showFollowersModal} onClose={() => setShowFollowersModal(false)} centered>
+                <div className="p-6 max-h-[80vh] flex flex-col">
+                  <h3 className="text-text-base text-base font-bold mb-4">Followers</h3>
+                  <div className="flex-1 overflow-y-auto">
+                    {followersList.length === 0 ? (
+                      <p className="text-text-secondary text-sm text-center py-4">No followers yet</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {followersList.map((u) => (
+                          <button
+                            key={u.id}
+                            onClick={() => {
+                              setShowFollowersModal(false);
+                              router.push(`/profile?userId=${u.id}`);
+                            }}
+                            className="flex items-center gap-3 w-full p-2 rounded hover:bg-surface-elevated transition-colors text-left"
+                          >
+                            <div className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
+                              {u.avatar ? (
+                                <img src={getFileUrl(u.avatar) || ""} alt="avatar" className="w-full h-full object-cover" />
+                              ) : (
+                                <svg className="w-4 h-4 text-text-secondary m-auto mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-sm text-text-base font-bold normal-case">{u.displayName || u.username}</span>
+                              <span className="text-xs text-text-secondary normal-case">@{u.username}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={() => setShowFollowersModal(false)}
+                      className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
+                    >
+                      Close
+                    </button>
                   </div>
                 </div>
-              )}
+              </Modal>
 
-              {showFollowingModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                  <div className="bg-surface rounded-[8px] p-6 max-w-md w-full mx-4 shadow-xl max-h-[80vh] flex flex-col">
-                    <h3 className="text-text-base text-base font-bold mb-4">Following</h3>
-                    <div className="flex-1 overflow-y-auto">
-                      {followingList.length === 0 ? (
-                        <p className="text-text-secondary text-sm text-center py-4">Not following anyone</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {followingList.map((u) => (
-                            <button
-                              key={u.id}
-                              onClick={() => {
-                                setShowFollowingModal(false);
-                                router.push(`/profile?userId=${u.id}`);
-                              }}
-                              className="flex items-center gap-3 w-full p-2 rounded hover:bg-surface-elevated transition-colors text-left"
-                            >
-                              <div className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
-                                {u.avatar ? (
-                                  <img src={getFileUrl(u.avatar) || ""} alt="avatar" className="w-full h-full object-cover" />
-                                ) : (
-                                  <svg className="w-4 h-4 text-text-secondary m-auto mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                  </svg>
-                                )}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-sm text-text-base font-bold normal-case">{u.displayName || u.username}</span>
-                                <span className="text-xs text-text-secondary normal-case">@{u.username}</span>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        onClick={() => setShowFollowingModal(false)}
-                        className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
-                      >
-                        Close
-                      </button>
-                    </div>
+              <Modal isOpen={showFollowingModal} onClose={() => setShowFollowingModal(false)} centered>
+                <div className="p-6 max-h-[80vh] flex flex-col">
+                  <h3 className="text-text-base text-base font-bold mb-4">Following</h3>
+                  <div className="flex-1 overflow-y-auto">
+                    {followingList.length === 0 ? (
+                      <p className="text-text-secondary text-sm text-center py-4">Not following anyone</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {followingList.map((u) => (
+                          <button
+                            key={u.id}
+                            onClick={() => {
+                              setShowFollowingModal(false);
+                              router.push(`/profile?userId=${u.id}`);
+                            }}
+                            className="flex items-center gap-3 w-full p-2 rounded hover:bg-surface-elevated transition-colors text-left"
+                          >
+                            <div className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
+                              {u.avatar ? (
+                                <img src={getFileUrl(u.avatar) || ""} alt="avatar" className="w-full h-full object-cover" />
+                              ) : (
+                                <svg className="w-4 h-4 text-text-secondary m-auto mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-sm text-text-base font-bold normal-case">{u.displayName || u.username}</span>
+                              <span className="text-xs text-text-secondary normal-case">@{u.username}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={() => setShowFollowingModal(false)}
+                      className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
+                    >
+                      Close
+                    </button>
                   </div>
                 </div>
-              )}
+              </Modal>
             </div>
           </div>
         </div>
