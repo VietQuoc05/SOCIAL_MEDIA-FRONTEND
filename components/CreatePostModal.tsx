@@ -96,7 +96,7 @@ export default function CreatePostModal({ open, onClose, onSuccess }: CreatePost
       isOpen={open}
       onClose={onClose}
       centered={false}
-      className="fixed top-[160px] right-4 w-[calc(100vw-2rem)] sm:w-96 bg-surface-elevated border border-border-gray rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] z-50"
+      className="fixed top-[72px] right-4 w-[calc(100vw-2rem)] sm:w-96 bg-surface-elevated border border-border-gray rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] z-50"
     >
       <div ref={panelRef}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-gray">

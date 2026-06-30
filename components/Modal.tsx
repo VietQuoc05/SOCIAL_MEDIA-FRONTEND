@@ -8,7 +8,7 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
-  /** If true, centers in viewport (default). If false, uses custom positioning */
+  /** If true, positions below header (default). If false, uses custom positioning */
   centered?: boolean;
 }
 
@@ -32,14 +32,14 @@ export default function Modal({ isOpen, onClose, title, children, className = ""
 
   return (
     <div
-      className={`fixed inset-0 z-50 bg-black/50 ${centered ? "flex items-center justify-center" : ""}`}
+      className={`fixed inset-0 z-50 bg-black/50 ${centered ? "flex justify-center" : ""}`}
       onClick={onClose}
     >
       {/* Click outside to close */}
       <div
         className={
           centered
-            ? `bg-surface-elevated border border-border-gray rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-full max-w-sm mx-4 overflow-hidden ${className}`
+            ? `mt-[72px] bg-surface-elevated border border-border-gray rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-full max-w-sm mx-4 overflow-hidden ${className}`
             : className
         }
         onClick={(e) => e.stopPropagation()}
