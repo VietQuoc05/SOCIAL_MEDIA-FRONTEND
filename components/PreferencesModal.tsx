@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTheme } from "./ThemeProvider";
 
 interface PreferencesModalProps {
@@ -9,6 +10,18 @@ interface PreferencesModalProps {
 
 export default function PreferencesModal({ open, onClose }: PreferencesModalProps) {
   const { theme, setTheme } = useTheme();
+
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   if (!open) return null;
 

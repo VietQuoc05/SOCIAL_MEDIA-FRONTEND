@@ -32,6 +32,18 @@ function ProfileContent({ userId }: { userId: string | null }) {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  // Prevent background scroll when any modal is open
+  useEffect(() => {
+    if (showFollowersModal || showFollowingModal || showUnfollowConfirm) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showFollowersModal, showFollowingModal, showUnfollowConfirm]);
+
   const handleOpenFollowers = async () => {
     try {
       const data = (await followApi.getFollowers(userId ?? undefined)) as FollowRecord[];
@@ -512,7 +524,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
               )}
 
               {showFollowersModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
                   <div className="bg-surface rounded-[8px] p-6 max-w-md w-full mx-4 shadow-xl max-h-[80vh] flex flex-col">
                     <h3 className="text-text-base text-base font-bold mb-4">Followers</h3>
                     <div className="flex-1 overflow-y-auto">
