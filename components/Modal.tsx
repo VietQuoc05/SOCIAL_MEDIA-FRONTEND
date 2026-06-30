@@ -39,7 +39,7 @@ export default function Modal({ isOpen, onClose, title, children, className = ""
       <div
         className={
           centered
-            ? `mt-[72px] bg-surface-elevated border border-border-gray rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-full max-w-sm mx-4 overflow-hidden ${className}`
+            ? `mt-[72px] h-fit bg-surface-elevated border border-border-gray rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-full max-w-sm mx-4 overflow-hidden ${className}`
             : className
         }
         onClick={(e) => e.stopPropagation()}
