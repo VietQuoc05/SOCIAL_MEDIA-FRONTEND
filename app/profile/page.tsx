@@ -310,15 +310,9 @@ function ProfileContent({ userId }: { userId: string | null }) {
                         </div>
                       </div>
                       <div className="flex items-start justify-between gap-4">
-                        {(isPrivate && !!userId && followStatus !== 'followed') ? (
-                          <p className="text-sm text-text-secondary normal-case">
-                            This account is private
-                          </p>
-                        ) : (
-                          <p className="text-sm text-text-base normal-case">
-                            {user?.bio || "No bio yet"}
-                          </p>
-                        )}
+                        <p className="text-sm text-text-base normal-case">
+                          {user?.bio || "No bio yet"}
+                        </p>
                         <div className="flex justify-end">
                           {!userId || userId === me?.id ? (
                             <div className="flex items-center gap-2">
@@ -493,19 +487,24 @@ function ProfileContent({ userId }: { userId: string | null }) {
                       )}
                     </div>
                   </div>
-                  {(isPrivate && !!userId && followStatus !== 'followed') ? (
-                    <p className="hidden sm:block mt-3 text-sm text-text-secondary normal-case">
-                      This account is private. Follow for more
-                    </p>
-                  ) : (
-                    <p className="hidden sm:block mt-3 text-sm text-text-base normal-case">
-                      {user?.bio || "No bio yet"}
-                    </p>
-                  )}
+                  <p className="hidden sm:block mt-3 text-sm text-text-base normal-case">
+                    {user?.bio || "No bio yet"}
+                  </p>
                 </div>
               </div>
 
-              {posts.length > 0 && !isPrivate && (
+              {isPrivate && !!userId && followStatus !== 'followed' ? (
+                <div className="mt-6 px-4 sm:px-6 pb-6">
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <svg className="w-12 h-12 text-text-secondary mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <p className="text-sm text-text-secondary normal-case">
+                      This account is private. Follow for more
+                    </p>
+                  </div>
+                </div>
+              ) : posts.length > 0 ? (
                 <div className="mt-6 px-4 sm:px-6 pb-6">
                   <div className="grid grid-cols-3 gap-1">
                     {posts.map((post) => {
@@ -533,7 +532,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                     })}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {uploadError && (
                 <div className="mt-4 text-xs text-negative-red bg-negative-red/10 border border-negative-red/30 rounded-sm px-3 py-2">
