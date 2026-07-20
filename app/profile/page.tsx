@@ -495,7 +495,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                   </div>
                   {(isPrivate && !!userId && followStatus !== 'followed') ? (
                     <p className="hidden sm:block mt-3 text-sm text-text-secondary normal-case">
-                      This account is private. Follow to see posts and followers.
+                      This account is private. Follow for more
                     </p>
                   ) : (
                     <p className="hidden sm:block mt-3 text-sm text-text-base normal-case">
