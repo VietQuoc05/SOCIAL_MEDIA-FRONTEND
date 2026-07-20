@@ -697,9 +697,9 @@ function ProfileContent({ userId }: { userId: string | null }) {
                                 onClick={async () => {
                                   try {
                                     await followApi.acceptRequest(r.follower.id);
-                                    setRequestsList(prev => prev.filter(req => req.follower.id !== r.follower.id));
+                                    await handleOpenRequests();
                                   } catch {
-                                    handleOpenRequests();
+                                    await handleOpenRequests();
                                   }
                                 }}
                                 className="px-3 py-1 rounded-full bg-sp-green text-white text-xs font-bold normal-case hover:bg-sp-green/90 transition-colors"
@@ -710,9 +710,9 @@ function ProfileContent({ userId }: { userId: string | null }) {
                                 onClick={async () => {
                                   try {
                                     await followApi.rejectRequest(r.follower.id);
-                                    setRequestsList(prev => prev.filter(req => req.follower.id !== r.follower.id));
+                                    await handleOpenRequests();
                                   } catch {
-                                    handleOpenRequests();
+                                    await handleOpenRequests();
                                   }
                                 }}
                                 className="px-3 py-1 rounded-full bg-surface-elevated border border-border-gray text-text-base text-xs font-bold normal-case hover:border-light-border transition-colors"
