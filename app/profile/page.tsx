@@ -204,9 +204,13 @@ function ProfileContent({ userId }: { userId: string | null }) {
         <div className="max-w-screen-lg mx-auto px-4 py-6">
           <div className="bg-surface rounded-[8px] overflow-hidden">
             <div
-              className="relative h-28 sm:h-40 bg-surface-elevated cursor-pointer"
-              onClick={() => coverInputRef.current?.click()}
-              title="Click to change cover"
+              className={`relative h-28 sm:h-40 bg-surface-elevated ${(!userId || userId === me?.id) ? 'cursor-pointer' : ''}`}
+              onClick={() => {
+                if (!userId || userId === me?.id) {
+                  coverInputRef.current?.click();
+                }
+              }}
+              title={(!userId || userId === me?.id) ? "Click to change cover" : undefined}
             >
               {user?.cover ? (
                 <img
@@ -217,10 +221,12 @@ function ProfileContent({ userId }: { userId: string | null }) {
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-surface-elevated to-background" />
               )}
-              <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center">
-                <span className="text-white text-xs font-bold uppercase tracking-wider opacity-0 hover:opacity-100 transition-opacity">
-                  Change cover
-                </span>
+              <div className={`absolute inset-0 bg-black/0 ${(!userId || userId === me?.id) ? 'hover:bg-black/20' : ''} transition-colors flex items-center justify-center`}>
+                {(!userId || userId === me?.id) && (
+                  <span className="text-white text-xs font-bold uppercase tracking-wider opacity-0 hover:opacity-100 transition-opacity">
+                    Change cover
+                  </span>
+                )}
               </div>
             </div>
             <input
@@ -234,9 +240,13 @@ function ProfileContent({ userId }: { userId: string | null }) {
             <div className="px-4 sm:px-6 pt-12 sm:pt-16 pb-6">
               <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
                 <div
-                  className="relative -mt-4 sm:-mt-6 cursor-pointer"
-                  onClick={() => avatarInputRef.current?.click()}
-                  title="Click to change avatar"
+                  className={`relative -mt-4 sm:-mt-6 ${(!userId || userId === me?.id) ? 'cursor-pointer' : ''}`}
+                  onClick={() => {
+                    if (!userId || userId === me?.id) {
+                      avatarInputRef.current?.click();
+                    }
+                  }}
+                  title={(!userId || userId === me?.id) ? "Click to change avatar" : undefined}
                 >
                   <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-surface bg-surface-elevated overflow-hidden">
                     {user?.avatar ? (
