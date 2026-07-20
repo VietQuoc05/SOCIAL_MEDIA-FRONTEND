@@ -695,9 +695,9 @@ function ProfileContent({ userId }: { userId: string | null }) {
                             </div>
                               <button
                                 onClick={async () => {
+                                  setRequestsList(prev => prev.filter(req => req.follower.id !== r.follower.id));
                                   try {
                                     await followApi.acceptRequest(r.follower.id);
-                                    await handleOpenRequests();
                                   } catch {
                                     await handleOpenRequests();
                                   }
@@ -708,9 +708,9 @@ function ProfileContent({ userId }: { userId: string | null }) {
                               </button>
                               <button
                                 onClick={async () => {
+                                  setRequestsList(prev => prev.filter(req => req.follower.id !== r.follower.id));
                                   try {
                                     await followApi.rejectRequest(r.follower.id);
-                                    await handleOpenRequests();
                                   } catch {
                                     await handleOpenRequests();
                                   }

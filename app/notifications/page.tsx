@@ -83,9 +83,9 @@ function NotificationsContent() {
 
   const handleAccept = async (e: React.MouseEvent, actorId: string) => {
     e.stopPropagation();
+    setNotifications(prev => prev.filter(n => !(n.actorId === actorId && n.type === 'FOLLOW_REQUEST')));
     try {
       await followApi.acceptRequest(actorId);
-      await fetchNotifications();
     } catch {
       await fetchNotifications();
     }
@@ -93,9 +93,9 @@ function NotificationsContent() {
 
   const handleReject = async (e: React.MouseEvent, actorId: string) => {
     e.stopPropagation();
+    setNotifications(prev => prev.filter(n => !(n.actorId === actorId && n.type === 'FOLLOW_REQUEST')));
     try {
       await followApi.rejectRequest(actorId);
-      await fetchNotifications();
     } catch {
       await fetchNotifications();
     }
