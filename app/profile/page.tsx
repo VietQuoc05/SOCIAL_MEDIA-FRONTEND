@@ -286,8 +286,8 @@ function ProfileContent({ userId }: { userId: string | null }) {
                         </div>
                         <div className="flex items-center gap-4">
                           <button
-                            onClick={handleOpenFollowing}
-                            className="text-center"
+                            onClick={isPrivate && followStatus !== 'followed' && !!userId ? undefined : handleOpenFollowing}
+                            className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
                           >
                             <span className="text-text-base font-bold normal-case">
                               {followStats?.following ?? user?.followingCount ?? 0}
@@ -297,8 +297,8 @@ function ProfileContent({ userId }: { userId: string | null }) {
                             </span>
                           </button>
                           <button
-                            onClick={handleOpenFollowers}
-                            className="text-center"
+                            onClick={isPrivate && followStatus !== 'followed' && !!userId ? undefined : handleOpenFollowers}
+                            className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
                           >
                             <span className="text-text-base font-bold normal-case">
                               {followStats?.followers ?? user?.followersCount ?? 0}
@@ -402,8 +402,8 @@ function ProfileContent({ userId }: { userId: string | null }) {
                     </div>
                     <div className="flex items-center gap-4">
                       <button
-                        onClick={handleOpenFollowing}
-                        className="text-center"
+                        onClick={isPrivate && followStatus !== 'followed' && !!userId ? undefined : handleOpenFollowing}
+                        className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
                       >
                         <span className="text-text-base font-bold normal-case">
                           {followStats?.following ?? user?.followingCount ?? 0}
@@ -413,8 +413,8 @@ function ProfileContent({ userId }: { userId: string | null }) {
                         </span>
                       </button>
                       <button
-                        onClick={handleOpenFollowers}
-                        className="text-center"
+                        onClick={isPrivate && followStatus !== 'followed' && !!userId ? undefined : handleOpenFollowers}
+                        className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
                       >
                         <span className="text-text-base font-bold normal-case">
                           {followStats?.followers ?? user?.followersCount ?? 0}
