@@ -693,28 +693,32 @@ function ProfileContent({ userId }: { userId: string | null }) {
                               <span className="text-sm text-text-base font-bold normal-case">{r.follower.displayName || r.follower.username}</span>
                               <span className="text-xs text-text-secondary normal-case">@{r.follower.username}</span>
                             </div>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await followApi.acceptRequest(r.follower.id);
-                                  setRequestsList(prev => prev.filter(req => req.follower.id !== r.follower.id));
-                                } catch {}
-                              }}
-                              className="px-3 py-1 rounded-full bg-sp-green text-white text-xs font-bold normal-case hover:bg-sp-green/90 transition-colors"
-                            >
-                              Accept
-                            </button>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await followApi.rejectRequest(r.follower.id);
-                                  setRequestsList(prev => prev.filter(req => req.follower.id !== r.follower.id));
-                                } catch {}
-                              }}
-                              className="px-3 py-1 rounded-full bg-surface-elevated border border-border-gray text-text-base text-xs font-bold normal-case hover:border-light-border transition-colors"
-                            >
-                              Reject
-                            </button>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await followApi.acceptRequest(r.follower.id);
+                                    setRequestsList(prev => prev.filter(req => req.follower.id !== r.follower.id));
+                                  } catch {
+                                    handleOpenRequests();
+                                  }
+                                }}
+                                className="px-3 py-1 rounded-full bg-sp-green text-white text-xs font-bold normal-case hover:bg-sp-green/90 transition-colors"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await followApi.rejectRequest(r.follower.id);
+                                    setRequestsList(prev => prev.filter(req => req.follower.id !== r.follower.id));
+                                  } catch {
+                                    handleOpenRequests();
+                                  }
+                                }}
+                                className="px-3 py-1 rounded-full bg-surface-elevated border border-border-gray text-text-base text-xs font-bold normal-case hover:border-light-border transition-colors"
+                              >
+                                Reject
+                              </button>
                           </div>
                         ))}
                       </div>

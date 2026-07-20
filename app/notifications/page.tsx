@@ -85,15 +85,9 @@ function NotificationsContent() {
     e.stopPropagation();
     try {
       await followApi.acceptRequest(actorId);
-      setNotifications(prev =>
-        prev.map(n =>
-          n.actorId === actorId && n.type === 'FOLLOW_REQUEST'
-            ? { ...n, type: 'FOLLOW_ACCEPTED' }
-            : n
-        )
-      );
+      await fetchNotifications();
     } catch {
-      // ignore
+      await fetchNotifications();
     }
   };
 
@@ -101,11 +95,9 @@ function NotificationsContent() {
     e.stopPropagation();
     try {
       await followApi.rejectRequest(actorId);
-      setNotifications(prev =>
-        prev.filter(n => !(n.actorId === actorId && n.type === 'FOLLOW_REQUEST'))
-      );
+      await fetchNotifications();
     } catch {
-      // ignore
+      await fetchNotifications();
     }
   };
 

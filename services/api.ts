@@ -193,7 +193,7 @@ export const followApi = {
     : api.get<{ followers: number; following: number }>("/follow/stats"),
   getSuggestedUsers: (limit = 5) => api.get<SuggestedUser[]>(`/follow/suggested?limit=${limit}`),
   getRequests: () => api.get<FollowRecord[]>('/follow/requests'),
-  acceptRequest: (followerId: string) => api.post(`/follow/${followerId}/accept`, {}),
+  acceptRequest: (followerId: string) => api.patch(`/follow/${followerId}/accept`, {}),
   rejectRequest: (followerId: string) => api.del(`/follow/${followerId}/reject`),
 };
 
