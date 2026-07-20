@@ -332,19 +332,18 @@ function ProfileContent({ userId }: { userId: string | null }) {
                               )}
                             </div>
                           ) : followStatus === 'pending' ? (
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await followApi.unfollow(userId);
-                                  setFollowStatus('not_follow_yet');
-                                  setFollowStats(s => s ? { ...s, followers: Math.max((s.followers || 1) - 1, 0) } : null);
-                                } catch {
-                                }
-                              }}
-                              className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
-                            >
-                              Requested
-                            </button>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await followApi.unfollow(userId);
+                                    setFollowStatus('not_follow_yet');
+                                  } catch {
+                                  }
+                                }}
+                                className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                              >
+                                Requested
+                              </button>
                           ) : followStatus === 'followed' ? (
                             <div className="flex items-center gap-2">
                               <button
@@ -373,7 +372,9 @@ function ProfileContent({ userId }: { userId: string | null }) {
                                 try {
                                   await followApi.follow(userId);
                                   setFollowStatus(isPrivate ? 'pending' : 'followed');
-                                  setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
+                                  if (!isPrivate) {
+                                    setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
+                                  }
                                 } catch {
                                 }
                               }}
@@ -440,7 +441,6 @@ function ProfileContent({ userId }: { userId: string | null }) {
                             try {
                               await followApi.unfollow(userId);
                               setFollowStatus('not_follow_yet');
-                              setFollowStats(s => s ? { ...s, followers: Math.max((s.followers || 1) - 1, 0) } : null);
                             } catch {
                             }
                           }}
@@ -476,7 +476,9 @@ function ProfileContent({ userId }: { userId: string | null }) {
                             try {
                               await followApi.follow(userId);
                               setFollowStatus(isPrivate ? 'pending' : 'followed');
-                              setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
+                              if (!isPrivate) {
+                                setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
+                              }
                             } catch {
                             }
                           }}
@@ -569,7 +571,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                         try {
                           await followApi.unfollow(userId);
                            setFollowStatus('not_follow_yet');
-                           setFollowStats(s => s ? { ...s, following: Math.max((s.following || 1) - 1, 0) } : null);
+                           setFollowStats(s => s ? { ...s, followers: Math.max((s.followers || 1) - 1, 0) } : null);
                         } catch {
                         } finally {
                           setShowUnfollowConfirm(false);
