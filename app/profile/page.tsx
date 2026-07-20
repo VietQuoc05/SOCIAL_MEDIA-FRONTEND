@@ -310,9 +310,9 @@ function ProfileContent({ userId }: { userId: string | null }) {
                         </div>
                       </div>
                       <div className="flex items-start justify-between gap-4">
-                        {isPrivate && !userId ? (
+                        {(isPrivate && !!userId && followStatus !== 'followed') ? (
                           <p className="text-sm text-text-secondary normal-case">
-                            Private account
+                            This account is private
                           </p>
                         ) : (
                           <p className="text-sm text-text-base normal-case">
@@ -493,9 +493,15 @@ function ProfileContent({ userId }: { userId: string | null }) {
                       )}
                     </div>
                   </div>
-                  <p className="hidden sm:block mt-3 text-sm text-text-base normal-case">
-                    {user?.bio || "No bio yet"}
-                  </p>
+                  {(isPrivate && !!userId && followStatus !== 'followed') ? (
+                    <p className="hidden sm:block mt-3 text-sm text-text-secondary normal-case">
+                      This account is private. Follow to see posts and followers.
+                    </p>
+                  ) : (
+                    <p className="hidden sm:block mt-3 text-sm text-text-base normal-case">
+                      {user?.bio || "No bio yet"}
+                    </p>
+                  )}
                 </div>
               </div>
 
