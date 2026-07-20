@@ -9,11 +9,14 @@ export interface User {
   cover?: string;
   bio?: string;
   role?: string;
+  isPublicFollowers?: boolean;
+  isPublicFollowing?: boolean;
   followersCount?: number;
   followingCount?: number;
   postsCount?: number;
   followStatus?: string;
   mutualFriendCount?: number;
+  isPrivate?: boolean;
 }
 
 export interface LoginResponse {

@@ -8,7 +8,7 @@ import { usersApi, getFileUrl } from "@/services/api";
 export default function EditProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [form, setForm] = useState({ username: "", displayName: "", bio: "" });
+  const [form, setForm] = useState({ username: "", displayName: "", bio: "", isPublicFollowers: true });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +29,7 @@ export default function EditProfilePage() {
           username: data.username || "",
           displayName: data.displayName || "",
           bio: data.bio || "",
+          isPublicFollowers: data.isPublicFollowers ?? true,
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load profile");
@@ -51,6 +52,7 @@ export default function EditProfilePage() {
         username: form.username,
         displayName: form.displayName,
         bio: form.bio,
+        isPublicFollowers: form.isPublicFollowers,
       })) as User;
 
       setUser(updated);
@@ -151,6 +153,39 @@ export default function EditProfilePage() {
                     {form.displayName.length}/30
                   </span>
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-secondary uppercase tracking-wider normal-case">
+                  Privacy
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, isPublicFollowers: true })}
+                    className={`flex-1 py-2 px-4 rounded-full text-sm font-bold normal-case transition-all ${
+                      form.isPublicFollowers
+                        ? 'bg-sp-green text-white'
+                        : 'bg-surface-elevated border border-border-gray text-text-base hover:border-light-border'
+                    }`}
+                  >
+                    Public
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, isPublicFollowers: false })}
+                    className={`flex-1 py-2 px-4 rounded-full text-sm font-bold normal-case transition-all ${
+                      !form.isPublicFollowers
+                        ? 'bg-sp-green text-white'
+                        : 'bg-surface-elevated border border-border-gray text-text-base hover:border-light-border'
+                    }`}
+                  >
+                    Private
+                  </button>
+                </div>
+                <p className="text-[11px] text-text-secondary normal-case">
+                  When private, only followers can see your posts and followers/following lists.
+                </p>
               </div>
 
               <div className="flex flex-col gap-1.5">

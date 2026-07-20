@@ -24,12 +24,15 @@ function ProfileContent({ userId }: { userId: string | null }) {
   const [uploadSuccess, setUploadSuccess] = useState("");
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [followersList, setFollowersList] = useState<User[]>([]);
   const [followingList, setFollowingList] = useState<User[]>([]);
-  const [following, setFollowing] = useState(false);
+  const [requestsList, setRequestsList] = useState<FollowRecord[]>([]);
+  const [followStatus, setFollowStatus] = useState<string>('not_follow_yet');
   const [isMutualFollow, setIsMutualFollow] = useState(false);
   const [showUnfollowConfirm, setShowUnfollowConfirm] = useState(false);
   const [followStats, setFollowStats] = useState<{ followers: number; following: number } | null>(null);
+  const [isPrivate, setIsPrivate] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,6 +58,17 @@ function ProfileContent({ userId }: { userId: string | null }) {
     }
   };
 
+  const handleOpenRequests = async () => {
+    try {
+      const data = (await followApi.getRequests()) as FollowRecord[];
+      setRequestsList(data.filter(r => r.follower).map(r => ({ ...r, follower: r.follower as User })));
+    } catch {
+      setRequestsList([]);
+    } finally {
+      setShowRequestsModal(true);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -69,14 +83,13 @@ function ProfileContent({ userId }: { userId: string | null }) {
         if (userId && userId !== data.id) {
           const profileData = (await usersApi.getUser(userId)) as User;
           setUser(profileData);
+          setIsPrivate(!!profileData.isPrivate);
           const userPosts = (await postsApi.getByUser(userId)) as Post[];
           setPosts(userPosts || []);
           setFollowStats({ followers: profileData.followersCount || 0, following: profileData.followingCount || 0 });
-          const followingData = (await followApi.getFollowing()) as { following: User }[];
-          setFollowing(followingData.some(f => f.following?.id === userId));
+          setFollowStatus(profileData.followStatus || 'not_follow_yet');
           // Check if target user also follows current user (mutual follow)
           try {
-            // Get who the target user is following, check if current user is in that list
             const targetFollowing = await followApi.getFollowing(userId) as FollowRecord[];
             setIsMutualFollow(targetFollowing.some(f => f.following?.id === data.id));
           } catch {
@@ -88,7 +101,8 @@ function ProfileContent({ userId }: { userId: string | null }) {
           setPosts(myPosts || []);
           const stats = (await followApi.getFollowStats()) as { followers: number; following: number };
           setFollowStats(stats);
-          setFollowing(false);
+          setFollowStatus('followed');
+          setIsPrivate(false);
         }
       } catch {
         router.replace("/login");
@@ -261,91 +275,121 @@ function ProfileContent({ userId }: { userId: string | null }) {
 
                 <div className="flex-1 pt-4 sm:pt-4">
                   <div className="flex flex-col gap-2 sm:hidden">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-base text-text-secondary normal-case">
-                          {user?.username}
-                        </p>
-                        <h2 className="text-text-base text-lg font-bold normal-case">
-                          {user?.displayName || user?.username}
-                        </h2>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={handleOpenFollowing}
-                          className="text-center"
-                        >
-                          <span className="text-text-base font-bold normal-case">
-                            {followStats?.following ?? user?.followingCount ?? 0}
-                          </span>
-                          <span className="block text-xs text-text-secondary normal-case">
-                            Following
-                          </span>
-                        </button>
-                        <button
-                          onClick={handleOpenFollowers}
-                          className="text-center"
-                        >
-                          <span className="text-text-base font-bold normal-case">
-                            {followStats?.followers ?? user?.followersCount ?? 0}
-                          </span>
-                          <span className="block text-xs text-text-secondary normal-case">
-                            Followers
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-start justify-between gap-4">
-                      <p className="text-sm text-text-base normal-case">
-                        {user?.bio || "No bio yet"}
-                      </p>
-                      <div className="flex justify-end">
-                        {!userId || userId === me?.id ? (
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-base text-text-secondary normal-case">
+                            {user?.username}
+                          </p>
+                          <h2 className="text-text-base text-lg font-bold normal-case">
+                            {user?.displayName || user?.username}
+                          </h2>
+                        </div>
+                        <div className="flex items-center gap-4">
                           <button
-                            onClick={() => router.push("/edit-profile")}
-                            className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                            onClick={handleOpenFollowing}
+                            className="text-center"
                           >
-                            Edit
+                            <span className="text-text-base font-bold normal-case">
+                              {followStats?.following ?? user?.followingCount ?? 0}
+                            </span>
+                            <span className="block text-xs text-text-secondary normal-case">
+                              Following
+                            </span>
                           </button>
-                      ) : following ? (
-                        <div className="flex items-center gap-2">
                           <button
-                            onClick={() => setShowUnfollowConfirm(true)}
-                            className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                            onClick={handleOpenFollowers}
+                            className="text-center"
                           >
-                            Followed
+                            <span className="text-text-base font-bold normal-case">
+                              {followStats?.followers ?? user?.followersCount ?? 0}
+                            </span>
+                            <span className="block text-xs text-text-secondary normal-case">
+                              Followers
+                            </span>
                           </button>
-                          {isMutualFollow && (
+                        </div>
+                      </div>
+                      <div className="flex items-start justify-between gap-4">
+                        {isPrivate && !userId ? (
+                          <p className="text-sm text-text-secondary normal-case">
+                            Private account
+                          </p>
+                        ) : (
+                          <p className="text-sm text-text-base normal-case">
+                            {user?.bio || "No bio yet"}
+                          </p>
+                        )}
+                        <div className="flex justify-end">
+                          {!userId || userId === me?.id ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => router.push("/edit-profile")}
+                                className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                              >
+                                Edit
+                              </button>
+                              {userId === me?.id && (
+                                <button
+                                  onClick={handleOpenRequests}
+                                  className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                                >
+                                  Requests
+                                </button>
+                              )}
+                            </div>
+                          ) : followStatus === 'pending' ? (
                             <button
                               onClick={async () => {
                                 try {
-                                  const conv = await chatApi.getOrCreateConversation(userId);
-                                  router.push(`/chat?conversationId=${conv.id}`);
-                                } catch {}
+                                  await followApi.unfollow(userId);
+                                  setFollowStatus('not_follow_yet');
+                                  setFollowStats(s => s ? { ...s, followers: Math.max((s.followers || 1) - 1, 0) } : null);
+                                } catch {
+                                }
                               }}
                               className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
                             >
-                              Message
+                              Requested
+                            </button>
+                          ) : followStatus === 'followed' ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setShowUnfollowConfirm(true)}
+                                className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                              >
+                                Followed
+                              </button>
+                              {isMutualFollow && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const conv = await chatApi.getOrCreateConversation(userId);
+                                      router.push(`/chat?conversationId=${conv.id}`);
+                                    } catch {}
+                                  }}
+                                  className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                                >
+                                  Message
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await followApi.follow(userId);
+                                  setFollowStatus(isPrivate ? 'pending' : 'followed');
+                                  setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
+                                } catch {
+                                }
+                              }}
+                              className="h-7 px-3 rounded-full bg-sp-green border border-sp-green text-white text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:bg-sp-green/90"
+                            >
+                              Follow
                             </button>
                           )}
                         </div>
-                      ) : (
-                        <button
-                          onClick={async () => {
-                            try {
-                              await followApi.follow(userId);
-                              setFollowing(true);
-                               setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
-                            } catch {
-                            }
-                          }}
-                          className="h-7 px-3 rounded-full bg-sp-green border border-sp-green text-white text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:bg-sp-green/90"
-                        >
-                          Follow
-                        </button>
-                      )}
                       </div>
-                    </div>
                   </div>
                   <div className="hidden sm:flex sm:items-center sm:justify-between gap-3">
                     <div>
@@ -380,13 +424,37 @@ function ProfileContent({ userId }: { userId: string | null }) {
                         </span>
                       </button>
                       {!userId || userId === me?.id ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => router.push("/edit-profile")}
+                            className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                          >
+                            Edit
+                          </button>
+                          {userId === me?.id && (
+                            <button
+                              onClick={handleOpenRequests}
+                              className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
+                            >
+                              Requests
+                            </button>
+                          )}
+                        </div>
+                      ) : followStatus === 'pending' ? (
                         <button
-                          onClick={() => router.push("/edit-profile")}
+                          onClick={async () => {
+                            try {
+                              await followApi.unfollow(userId);
+                              setFollowStatus('not_follow_yet');
+                              setFollowStats(s => s ? { ...s, followers: Math.max((s.followers || 1) - 1, 0) } : null);
+                            } catch {
+                            }
+                          }}
                           className="h-7 px-3 rounded-full bg-surface-elevated border border-light-border text-text-base text-[11px] font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated/80"
                         >
-                          Edit
+                          Requested
                         </button>
-                      ) : following ? (
+                      ) : followStatus === 'followed' ? (
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setShowUnfollowConfirm(true)}
@@ -413,8 +481,8 @@ function ProfileContent({ userId }: { userId: string | null }) {
                           onClick={async () => {
                             try {
                               await followApi.follow(userId);
-                              setFollowing(true);
-                               setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
+                              setFollowStatus(isPrivate ? 'pending' : 'followed');
+                              setFollowStats(s => s ? { ...s, followers: (s.followers || 0) + 1 } : null);
                             } catch {
                             }
                           }}
@@ -431,7 +499,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                 </div>
               </div>
 
-              {posts.length > 0 && (
+              {posts.length > 0 && !isPrivate && (
                 <div className="mt-6 px-4 sm:px-6 pb-6">
                   <div className="grid grid-cols-3 gap-1">
                     {posts.map((post) => {
@@ -495,8 +563,8 @@ function ProfileContent({ userId }: { userId: string | null }) {
                         if (!userId) return;
                         try {
                           await followApi.unfollow(userId);
-                          setFollowing(false);
-                          setFollowStats(s => s ? { ...s, following: Math.max((s.following || 1) - 1, 0) } : null);
+                           setFollowStatus('not_follow_yet');
+                           setFollowStats(s => s ? { ...s, following: Math.max((s.following || 1) - 1, 0) } : null);
                         } catch {
                         } finally {
                           setShowUnfollowConfirm(false);
@@ -594,6 +662,67 @@ function ProfileContent({ userId }: { userId: string | null }) {
                   <div className="mt-4 flex justify-end">
                     <button
                       onClick={() => setShowFollowingModal(false)}
+                      className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </Modal>
+
+              <Modal isOpen={showRequestsModal} onClose={() => setShowRequestsModal(false)} centered>
+                <div className="p-6 max-h-[80vh] flex flex-col">
+                  <h3 className="text-text-base text-base font-bold mb-4">Follow Requests</h3>
+                  <div className="flex-1 overflow-y-auto">
+                    {requestsList.length === 0 ? (
+                      <p className="text-text-secondary text-sm text-center py-4">No pending requests</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {requestsList.map((r) => (
+                          <div key={r.id} className="flex items-center gap-3 w-full p-2 rounded hover:bg-surface-elevated transition-colors">
+                            <div className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
+                              {r.follower.avatar ? (
+                                <img src={getFileUrl(r.follower.avatar) || ""} alt="avatar" className="w-full h-full object-cover" />
+                              ) : (
+                                <svg className="w-4 h-4 text-text-secondary m-auto mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex flex-col flex-1">
+                              <span className="text-sm text-text-base font-bold normal-case">{r.follower.displayName || r.follower.username}</span>
+                              <span className="text-xs text-text-secondary normal-case">@{r.follower.username}</span>
+                            </div>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await followApi.acceptRequest(r.follower.id);
+                                  setRequestsList(prev => prev.filter(req => req.follower.id !== r.follower.id));
+                                } catch {}
+                              }}
+                              className="px-3 py-1 rounded-full bg-sp-green text-white text-xs font-bold normal-case hover:bg-sp-green/90 transition-colors"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await followApi.rejectRequest(r.follower.id);
+                                  setRequestsList(prev => prev.filter(req => req.follower.id !== r.follower.id));
+                                } catch {}
+                              }}
+                              className="px-3 py-1 rounded-full bg-surface-elevated border border-border-gray text-text-base text-xs font-bold normal-case hover:border-light-border transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={() => setShowRequestsModal(false)}
                       className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
                     >
                       Close

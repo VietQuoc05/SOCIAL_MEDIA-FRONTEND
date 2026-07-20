@@ -11,6 +11,14 @@ export interface User {
   cover?: string;
   bio?: string;
   role?: string;
+  isPublicFollowers?: boolean;
+  isPublicFollowing?: boolean;
+  followersCount?: number;
+  followingCount?: number;
+  postsCount?: number;
+  followStatus?: string;
+  mutualFriendCount?: number;
+  isPrivate?: boolean;
 }
 
 interface LoginResponse {
@@ -144,7 +152,7 @@ export const usersApi = {
   getMe: () => api.get<User>("/users/me"),
   getUser: (id: string) => api.get<User>(`/users/${id}`),
   search: (q: string) => api.get<User[]>(`/users/search?q=${encodeURIComponent(q)}`),
-  updateProfile: (data: { username?: string; displayName?: string; bio?: string }) =>
+  updateProfile: (data: { username?: string; displayName?: string; bio?: string; isPublicFollowers?: boolean; isPublicFollowing?: boolean }) =>
     api.patch<User>("/users/me", data),
   uploadAvatar: async (file: File) => {
     const formData = new FormData();
@@ -184,6 +192,9 @@ export const followApi = {
     ? api.get<{ followers: number; following: number }>(`/follow/stats?userId=${userId}`)
     : api.get<{ followers: number; following: number }>("/follow/stats"),
   getSuggestedUsers: (limit = 5) => api.get<SuggestedUser[]>(`/follow/suggested?limit=${limit}`),
+  getRequests: () => api.get<FollowRecord[]>('/follow/requests'),
+  acceptRequest: (followerId: string) => api.post(`/follow/${followerId}/accept`, {}),
+  rejectRequest: (followerId: string) => api.del(`/follow/${followerId}/reject`),
 };
 
 export interface Post {
@@ -242,14 +253,34 @@ export const postsApi = {
   deletePost: (id: string) => api.del(`/posts/${id}`),
 };
 
+export interface Notification {
+  id: string;
+  recipientId: string;
+  actorId: string;
+  actor: User;
+  type: 'FOLLOW_REQUEST' | 'FOLLOW_ACCEPTED' | 'COMMENT_REPLY';
+  postId?: string;
+  commentId?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export const notificationsApi = {
+  getAll: (filter = 'all') => api.get<Notification[]>(`/notifications${filter !== 'all' ? `?filter=${filter}` : ''}`),
+  getUnreadCount: () => api.get<{ count: number }>('/notifications/unread-count'),
+  markAsRead: (id: string) => api.patch(`/notifications/${id}/read`, {}),
+  markAllAsRead: () => api.patch('/notifications/read-all', {}),
+};
+
 export const decodeToken = (token: string) => {
+  let decoded: any = null;
   try {
     const payload = token.split(".")[1];
-    const decoded = JSON.parse(atob(payload));
-    return decoded;
+    decoded = JSON.parse(atob(payload));
   } catch {
-    return null;
+    decoded = null;
   }
+  return decoded;
 };
 
 export interface Conversation {

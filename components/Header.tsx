@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { User, Conversation, getFileUrl, usersApi, chatApi } from "@/services/api";
+import { User, Conversation, getFileUrl, usersApi, chatApi, notificationsApi, Notification } from "@/services/api";
 import { socket } from "@/services/socket";
 import CreatePostModal from "./CreatePostModal";
 import PreferencesModal from "./PreferencesModal";
@@ -12,9 +12,10 @@ interface HeaderProps {
   user: User | null;
   onPostCreated?: () => void;
   totalUnreadChats?: number;
+  unreadNotifications?: number;
 }
 
-export default function Header({ user, onPostCreated, totalUnreadChats: propTotalUnread }: HeaderProps) {
+export default function Header({ user, onPostCreated, totalUnreadChats: propTotalUnread, unreadNotifications: propUnreadNotifications }: HeaderProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
@@ -23,6 +24,7 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
@@ -83,6 +85,43 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
       setUnreadCount(propTotalUnread);
     }
   }, [propTotalUnread]);
+
+  // Load initial unread notifications from API
+  useEffect(() => {
+    if (!user) return;
+    if (propUnreadNotifications !== undefined) {
+      setUnreadNotifications(propUnreadNotifications);
+      return;
+    }
+
+    const fetchUnreadNotifications = async () => {
+      try {
+        const data = await notificationsApi.getUnreadCount();
+        setUnreadNotifications(data.count || 0);
+      } catch {
+        // ignore
+      }
+    };
+
+    fetchUnreadNotifications();
+  }, [user, propUnreadNotifications]);
+
+  // Listen for new notifications via socket (works on ALL pages)
+  useEffect(() => {
+    if (!user) return;
+
+    const handleNewNotification = (data: any) => {
+      if (data.recipientId === user.id) {
+        setUnreadNotifications(prev => prev + 1);
+      }
+    };
+
+    socket.on("new_notification", handleNewNotification);
+
+    return () => {
+      socket.off("new_notification", handleNewNotification);
+    };
+  }, [user]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -175,6 +214,21 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
               </svg>
             </button>
             {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-sp-green rounded-full border-2 border-surface" />
+            )}
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => router.push("/notifications")}
+              className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base hover:bg-surface-elevated transition-colors"
+              title="Notifications"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </button>
+            {unreadNotifications > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-sp-green rounded-full border-2 border-surface" />
             )}
           </div>
