@@ -21,25 +21,14 @@ export default function CreatePostModal({ open, onClose, onSuccess }: CreatePost
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
-      }
+    if (!open) {
+      setCaption("");
+      setFiles([]);
+      setError("");
     }
-    function handleEsc(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEsc);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEsc);
-    };
-  }, [open, onClose]);
+  }, [open]);
 
   const readFileAsDataURL = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -89,17 +78,17 @@ export default function CreatePostModal({ open, onClose, onSuccess }: CreatePost
     }
   };
 
-  if (!open) return null;
-
   return (
     <Modal isOpen={open} onClose={onClose} className="max-w-2xl">
-      <div ref={panelRef}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border-gray">
-          <h2 className="text-text-base text-base font-bold uppercase tracking-wider">Create Post</h2>
-          <button onClick={onClose} className="text-text-secondary hover:text-text-base text-xl leading-none">&times;</button>
+      <div className="flex max-h-[calc(100dvh-2rem)] flex-col">
+        <div className="shrink-0 border-b border-border-gray px-4 py-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-text-base text-base font-bold uppercase tracking-wider">Create Post</h2>
+            <button onClick={onClose} className="text-text-secondary hover:text-text-base text-xl leading-none">&times;</button>
+          </div>
         </div>
 
-        <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
@@ -140,7 +129,7 @@ export default function CreatePostModal({ open, onClose, onSuccess }: CreatePost
           )}
         </div>
 
-        <div className="px-4 py-3 border-t border-border-gray flex justify-end gap-2">
+        <div className="shrink-0 border-t border-border-gray px-4 py-3 flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 text-sm text-text-secondary hover:text-text-base transition-colors">Cancel</button>
           <button
             onClick={handleSubmit}
