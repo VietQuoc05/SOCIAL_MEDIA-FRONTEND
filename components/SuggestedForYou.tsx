@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SuggestedUser, followApi, getFileUrl } from "@/services/api";
+import { SkeletonBase } from "./Skeleton";
 
 export default function SuggestedForYou() {
   const router = useRouter();
@@ -42,8 +43,26 @@ export default function SuggestedForYou() {
 
   if (loading) {
     return (
-      <div className="p-4">
-        <p className="text-xs text-text-secondary">Loading suggestions...</p>
+      <div className="mt-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-bold text-text-secondary normal-case">
+            Suggested for you
+          </span>
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <SkeletonBase className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated flex-shrink-0" />
+                <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+                  <SkeletonBase className="h-3 w-28" />
+                  <SkeletonBase className="h-2.5 w-20" />
+                </div>
+              </div>
+              <SkeletonBase className="ml-2 h-7 w-14 rounded-[4px] flex-shrink-0" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

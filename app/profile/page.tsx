@@ -7,6 +7,7 @@ import { usersApi, getFileUrl, postsApi, Post, followApi, FollowRecord, chatApi 
 import Header from "@/components/Header";
 import Modal from "@/components/Modal";
 import { socket } from "@/services/socket";
+import { ProfileSkeleton } from "@/components/Skeleton";
 
 interface FollowStats {
   followers: number;
@@ -200,11 +201,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   return (
@@ -880,11 +877,7 @@ function ProfilePageInner() {
 
 export default function ProfilePage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
-      </div>
-    }>
+    <Suspense fallback={<ProfileSkeleton />}>
       <ProfilePageInner />
     </Suspense>
   );

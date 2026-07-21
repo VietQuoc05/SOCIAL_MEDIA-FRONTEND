@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { postsApi, getFileUrl, Post, User, usersApi, reactionsApi, commentsApi, Comment } from "@/services/api";
 import Header from "@/components/Header";
 import { socket } from "@/services/socket";
+import { PostDetailSkeleton, SkeletonBase } from "@/components/Skeleton";
 
 function CommentItem({ comment, depth = 0, onReply, onUpdateComment, onDeleteComment, currentUserId, postAuthorId }: { comment: Comment; depth?: number; onReply: (parentId: string) => void; onUpdateComment: (commentId: string, isLiked: boolean, totalReactions: number) => void; onDeleteComment: (commentId: string) => void; currentUserId?: string; postAuthorId?: string }) {
   const router = useRouter();
@@ -342,11 +343,7 @@ export default function PostDetailContent() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
-      </div>
-    );
+    return <PostDetailSkeleton />;
   }
 
   const imagesCount = post?.images?.length || 0;
@@ -506,7 +503,17 @@ export default function PostDetailContent() {
                     </div>
                   )}
                   {commentsLoading ? (
-                    <p className="text-text-secondary text-xs">Loading comments...</p>
+                    <div className="space-y-3">
+                      {Array.from({ length: 2 }).map((_, i) => (
+                        <div key={i} className="flex gap-2 py-2">
+                          <SkeletonBase className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated flex-shrink-0" />
+                          <div className="flex-1 flex flex-col gap-2">
+                            <SkeletonBase className="h-3 w-28" />
+                            <SkeletonBase className="h-3 w-full" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   ) : comments.length > 0 ? (
                     comments.map((comment) => (
                       <div key={comment.id} className="py-3 border-t border-border-gray">

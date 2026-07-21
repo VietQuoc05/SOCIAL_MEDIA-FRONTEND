@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import SuggestedForYou from "@/components/SuggestedForYou";
 import SwitchAccountModal from "@/components/SwitchAccountModal";
 import { socket } from "@/services/socket";
+import { PostCardSkeleton } from "@/components/Skeleton";
 
 interface FeedResponse {
   data: Post[];
@@ -162,8 +163,24 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
+      <div className="flex flex-col min-h-screen bg-background">
+        <div className="h-14 bg-surface border-b border-border-gray" />
+        <main className="flex-1">
+          <div className="max-w-screen-xl mx-auto px-4 py-6 flex gap-8 justify-center">
+            <div className="max-w-lg w-full space-y-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <PostCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </main>
+        <footer className="bg-surface border-t border-border-gray">
+          <div className="max-w-screen-xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span className="text-xs text-text-secondary normal-case">
+              © {new Date().getFullYear()} Social Media
+            </span>
+          </div>
+        </footer>
       </div>
     );
   }
@@ -293,11 +310,11 @@ export default function HomePage() {
             )}
 
             {hasMore && (
-              <div ref={loadMoreRef} className="py-4 text-center">
+              <div ref={loadMoreRef} className="py-4">
                 {loadingMore ? (
-                  <p className="text-text-secondary text-sm">Loading...</p>
+                  <PostCardSkeleton />
                 ) : (
-                  <p className="text-text-secondary text-xs">Scroll for more</p>
+                  <p className="text-text-secondary text-xs text-center">Scroll for more</p>
                 )}
               </div>
             )}
