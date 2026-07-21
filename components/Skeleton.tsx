@@ -134,7 +134,7 @@ function ChatSkeleton() {
     <div className="flex flex-col h-screen bg-background">
       <div className="h-14 bg-surface border-b border-border-gray flex-shrink-0" />
       <div className="flex-1 flex overflow-hidden">
-        <div className="hidden md:flex w-80 lg:w-96 border-r border-border-gray bg-surface flex-col">
+        <div className="block md:flex w-full md:w-80 lg:w-96 border-r border-border-gray bg-surface flex-col">
           <div className="py-5 px-3 border-b border-border-gray">
             <SkeletonBase className="h-5 w-32" />
           </div>
@@ -151,7 +151,7 @@ function ChatSkeleton() {
             ))}
           </div>
         </div>
-        <div className="flex-1 flex flex-col">
+        <div className="hidden md:flex flex-1 flex-col">
           <div className="flex items-center gap-3 p-3 border-b border-border-gray bg-surface flex-shrink-0">
             <SkeletonBase className="w-10 h-10 rounded-full border border-border-gray bg-surface-elevated flex-shrink-0" />
             <div className="flex flex-col gap-2">
@@ -159,23 +159,11 @@ function ChatSkeleton() {
               <SkeletonBase className="h-3 w-24" />
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 bg-background">
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] px-3 py-2 rounded-[8px] ${i % 2 === 0 ? 'bg-sp-green text-white rounded-br-sm' : 'bg-surface-elevated text-text-base rounded-bl-sm'}`}>
-                    <SkeletonBase className={`h-3 w-48 mb-1 ${i % 2 === 0 ? 'bg-white/20' : 'bg-surface'}`} />
-                    <SkeletonBase className={`h-2.5 w-16 ${i % 2 === 0 ? 'bg-white/20' : 'bg-surface'}`} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="border-t border-border-gray bg-surface p-3 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <SkeletonBase className="w-9 h-9 rounded-full flex-shrink-0" />
-              <SkeletonBase className="flex-1 h-9 rounded-full" />
-              <SkeletonBase className="w-9 h-9 rounded-full flex-shrink-0" />
+          <div className="flex-1 flex items-center justify-center bg-background">
+            <div className="text-center">
+              <SkeletonBase className="w-16 h-16 rounded-full mx-auto mb-4 bg-surface-elevated" />
+              <SkeletonBase className="h-4 w-40 mx-auto mb-2" />
+              <SkeletonBase className="h-3 w-56 mx-auto" />
             </div>
           </div>
         </div>
