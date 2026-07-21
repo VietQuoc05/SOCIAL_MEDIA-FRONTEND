@@ -12,6 +12,7 @@ import {
 } from "@/services/api";
 import Header from "@/components/Header";
 import { socket } from "@/services/socket";
+import { ChatSkeleton } from "@/components/Skeleton";
 
 function ChatContent() {
   const router = useRouter();
@@ -389,11 +390,7 @@ function ChatContent() {
   const otherUser = activeConvData?.otherUser;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
-      </div>
-    );
+    return <ChatSkeleton />;
   }
 
   const canSend = (text.trim() || previewImages.length > 0) && !sending;
@@ -724,11 +721,7 @@ function ChatContent() {
 
 export default function ChatPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
-      </div>
-    }>
+    <Suspense fallback={<ChatSkeleton />}>
       <ChatContent />
     </Suspense>
   );

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, notificationsApi, Notification, usersApi, followApi, getFileUrl } from "@/services/api";
 import Header from "@/components/Header";
+import { NotificationsSkeleton } from "@/components/Skeleton";
 
 type Filter = 'all' | 'follow' | 'comments';
 
@@ -135,11 +136,7 @@ function NotificationsContent() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
-      </div>
-    );
+    return <NotificationsSkeleton />;
   }
 
   return (
@@ -248,11 +245,7 @@ function NotificationsContent() {
 
 export default function NotificationsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
-      </div>
-    }>
+    <Suspense fallback={<NotificationsSkeleton />}>
       <NotificationsContent />
     </Suspense>
   );

@@ -129,4 +129,99 @@ function PostDetailSkeleton() {
   );
 }
 
-export { SkeletonBase, PostCardSkeleton, ProfileSkeleton, PostDetailSkeleton };
+function ChatSkeleton() {
+  return (
+    <div className="flex flex-col h-screen bg-background">
+      <div className="h-14 bg-surface border-b border-border-gray flex-shrink-0" />
+      <div className="flex-1 flex overflow-hidden">
+        <div className="hidden md:flex w-80 lg:w-96 border-r border-border-gray bg-surface flex-col">
+          <div className="py-5 px-3 border-b border-border-gray">
+            <SkeletonBase className="h-5 w-32" />
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 border-b border-border-gray/50">
+                <SkeletonBase className="w-10 h-10 rounded-full border border-border-gray bg-surface-elevated flex-shrink-0" />
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <SkeletonBase className="h-3 w-28" />
+                  <SkeletonBase className="h-2.5 w-40" />
+                </div>
+                <SkeletonBase className="w-5 h-5 rounded-full flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col">
+          <div className="flex items-center gap-3 p-3 border-b border-border-gray bg-surface flex-shrink-0">
+            <SkeletonBase className="w-10 h-10 rounded-full border border-border-gray bg-surface-elevated flex-shrink-0" />
+            <div className="flex flex-col gap-2">
+              <SkeletonBase className="h-4 w-36" />
+              <SkeletonBase className="h-3 w-24" />
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 bg-background">
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[75%] px-3 py-2 rounded-[8px] ${i % 2 === 0 ? 'bg-sp-green text-white rounded-br-sm' : 'bg-surface-elevated text-text-base rounded-bl-sm'}`}>
+                    <SkeletonBase className={`h-3 w-48 mb-1 ${i % 2 === 0 ? 'bg-white/20' : 'bg-surface'}`} />
+                    <SkeletonBase className={`h-2.5 w-16 ${i % 2 === 0 ? 'bg-white/20' : 'bg-surface'}`} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="border-t border-border-gray bg-surface p-3 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <SkeletonBase className="w-9 h-9 rounded-full flex-shrink-0" />
+              <SkeletonBase className="flex-1 h-9 rounded-full" />
+              <SkeletonBase className="w-9 h-9 rounded-full flex-shrink-0" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NotificationsSkeleton() {
+  return (
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="h-14 bg-surface border-b border-border-gray" />
+      <main className="flex-1">
+        <div className="max-w-screen-lg mx-auto px-4 py-6">
+          <div className="flex items-center justify-between mb-6">
+            <SkeletonBase className="h-6 w-40" />
+            <SkeletonBase className="h-4 w-28" />
+          </div>
+          <div className="flex gap-2 mb-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonBase key={i} className="h-9 w-16 rounded-full" />
+            ))}
+          </div>
+          <div className="bg-surface rounded-[8px] overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-3 p-4 border-b border-border-gray/50 last:border-b-0">
+                <SkeletonBase className="w-10 h-10 rounded-full border border-border-gray bg-surface-elevated flex-shrink-0" />
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <SkeletonBase className="h-3 w-full" />
+                  <SkeletonBase className="h-2.5 w-24" />
+                </div>
+                <SkeletonBase className="w-2 h-2 rounded-full flex-shrink-0 mt-1" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+      <footer className="bg-surface border-t border-border-gray">
+        <div className="max-w-screen-xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <span className="text-xs text-text-secondary normal-case">
+            © {new Date().getFullYear()} Social Media
+          </span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export { SkeletonBase, PostCardSkeleton, ProfileSkeleton, PostDetailSkeleton, ChatSkeleton, NotificationsSkeleton };
