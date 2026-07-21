@@ -83,7 +83,6 @@
     color: var(--text-base);
     font-family: var(--font-geist-sans), CircularSp-Arab, CircularSp-Hebr, CircularSp-Cyrl, CircularSp-Grek, CircularSp-Deva, Helvetica Neue, helvetica, arial, Hiragino Sans, Hiragino Kaku Gothic ProN, Meiryo, MS Gothic, sans-serif;
     text-rendering: optimizeLegibility;
-    content-visibility: auto;
   }
   ::selection {
     background: var(--sp-green);
