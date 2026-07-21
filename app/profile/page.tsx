@@ -317,7 +317,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                              className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
                            >
                              <span className="text-text-base font-bold normal-case">
-                                {user?.totalPosts ?? user?.postsCount ?? 0}
+                                {user?.postsCount ?? user?.totalPosts ?? 0}
                              </span>
                              <span className="block text-xs text-text-secondary normal-case">
                                Posts
