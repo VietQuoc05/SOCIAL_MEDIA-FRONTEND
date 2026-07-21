@@ -92,7 +92,7 @@ export default function CreatePostModal({ open, onClose, onSuccess }: CreatePost
   if (!open) return null;
 
   return (
-    <Modal isOpen={open} onClose={onClose}>
+    <Modal isOpen={open} onClose={onClose} className="max-w-2xl">
       <div ref={panelRef}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-gray">
           <h2 className="text-text-base text-base font-bold uppercase tracking-wider">Create Post</h2>
