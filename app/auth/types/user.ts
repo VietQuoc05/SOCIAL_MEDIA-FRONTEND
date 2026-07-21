@@ -14,6 +14,7 @@ export interface User {
   followersCount?: number;
   followingCount?: number;
   postsCount?: number;
+  totalPosts?: number;
   followStatus?: string;
   mutualFriendCount?: number;
   isPrivate?: boolean;

@@ -31,7 +31,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
   const [followStatus, setFollowStatus] = useState<string>('not_follow_yet');
   const [isMutualFollow, setIsMutualFollow] = useState(false);
   const [showUnfollowConfirm, setShowUnfollowConfirm] = useState(false);
-  const [followStats, setFollowStats] = useState<{ followers: number; following: number } | null>(null);
+  const [followStats, setFollowStats] = useState<{ followers: number; following: number; posts?: number } | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -294,30 +294,40 @@ function ProfileContent({ userId }: { userId: string | null }) {
                             {user?.displayName || user?.username}
                           </h2>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <button
-                            onClick={isPrivate && followStatus !== 'followed' && !!userId ? undefined : handleOpenFollowing}
-                            className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
-                          >
-                            <span className="text-text-base font-bold normal-case">
-                              {followStats?.following ?? user?.followingCount ?? 0}
-                            </span>
-                            <span className="block text-xs text-text-secondary normal-case">
-                              Following
-                            </span>
-                          </button>
-                          <button
-                            onClick={isPrivate && followStatus !== 'followed' && !!userId ? undefined : handleOpenFollowers}
-                            className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
-                          >
-                            <span className="text-text-base font-bold normal-case">
-                              {followStats?.followers ?? user?.followersCount ?? 0}
-                            </span>
-                            <span className="block text-xs text-text-secondary normal-case">
-                              Followers
-                            </span>
-                          </button>
-                        </div>
+                         <div className="flex items-center gap-4">
+                           <button
+                             className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
+                           >
+                             <span className="text-text-base font-bold normal-case">
+                                {user?.totalPosts ?? user?.postsCount ?? 0}
+                             </span>
+                             <span className="block text-xs text-text-secondary normal-case">
+                               Posts
+                             </span>
+                           </button>
+                           <button
+                             onClick={isPrivate && followStatus !== 'followed' && !!userId ? undefined : handleOpenFollowing}
+                             className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
+                           >
+                             <span className="text-text-base font-bold normal-case">
+                               {followStats?.following ?? user?.followingCount ?? 0}
+                             </span>
+                             <span className="block text-xs text-text-secondary normal-case">
+                               Following
+                             </span>
+                           </button>
+                           <button
+                             onClick={isPrivate && followStatus !== 'followed' && !!userId ? undefined : handleOpenFollowers}
+                             className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
+                           >
+                             <span className="text-text-base font-bold normal-case">
+                               {followStats?.followers ?? user?.followersCount ?? 0}
+                             </span>
+                             <span className="block text-xs text-text-secondary normal-case">
+                               Followers
+                             </span>
+                           </button>
+                         </div>
                       </div>
                       <div className="flex items-start justify-between gap-4">
                         <p className="text-sm text-text-base normal-case">
@@ -406,6 +416,16 @@ function ProfileContent({ userId }: { userId: string | null }) {
                       </h2>
                     </div>
                     <div className="flex items-center gap-4">
+                      <button
+                        className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
+                      >
+                        <span className="text-text-base font-bold normal-case">
+                           {user?.totalPosts ?? user?.postsCount ?? 0}
+                        </span>
+                        <span className="block text-xs text-text-secondary normal-case">
+                          Posts
+                        </span>
+                      </button>
                       <button
                         onClick={isPrivate && followStatus !== 'followed' && !!userId ? undefined : handleOpenFollowing}
                         className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
