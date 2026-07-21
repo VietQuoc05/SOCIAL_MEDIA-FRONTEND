@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "@/app/auth/types/user";
 import { usersApi, getFileUrl, postsApi, Post, followApi, FollowRecord, chatApi } from "@/services/api";
@@ -33,6 +33,9 @@ function ProfileContent({ userId }: { userId: string | null }) {
   const [showUnfollowConfirm, setShowUnfollowConfirm] = useState(false);
   const [followStats, setFollowStats] = useState<{ followers: number; following: number; posts?: number } | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [currentUserFollowingIds, setCurrentUserFollowingIds] = useState<Set<string>>(new Set());
+  const [followersSearchQuery, setFollowersSearchQuery] = useState("");
+  const [followingSearchQuery, setFollowingSearchQuery] = useState("");
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,9 +45,10 @@ function ProfileContent({ userId }: { userId: string | null }) {
       setFollowersList(data.map(r => r.follower).filter(Boolean));
     } catch {
       setFollowersList([]);
-    } finally {
-      setShowFollowersModal(true);
     }
+    await fetchCurrentUserFollowing();
+    setFollowersSearchQuery("");
+    setShowFollowersModal(true);
   };
 
   const handleOpenFollowing = async () => {
@@ -53,8 +57,19 @@ function ProfileContent({ userId }: { userId: string | null }) {
       setFollowingList(data.map(r => r.following).filter(Boolean));
     } catch {
       setFollowingList([]);
-    } finally {
-      setShowFollowingModal(true);
+    }
+    await fetchCurrentUserFollowing();
+    setFollowingSearchQuery("");
+    setShowFollowingModal(true);
+  };
+
+  const fetchCurrentUserFollowing = async () => {
+    if (!me?.id) return;
+    try {
+      const data = (await followApi.getFollowing(me.id)) as FollowRecord[];
+      setCurrentUserFollowingIds(new Set(data.map(r => r.following?.id).filter(Boolean)));
+    } catch {
+      setCurrentUserFollowingIds(new Set());
     }
   };
 
@@ -618,39 +633,65 @@ function ProfileContent({ userId }: { userId: string | null }) {
               <Modal isOpen={showFollowersModal} onClose={() => setShowFollowersModal(false)}>
                 <div className="flex max-h-[calc(100dvh-2rem)] flex-col">
                   <div className="shrink-0 border-b border-border-gray px-6 py-4">
-                    <h3 className="text-text-base text-base font-bold">Followers</h3>
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-text-base text-base font-bold">Followers</h3>
+                      <input
+                        type="text"
+                        value={followersSearchQuery}
+                        onChange={(e) => setFollowersSearchQuery(e.target.value)}
+                        placeholder="Search followers..."
+                        className="h-8 w-40 rounded-full border border-border-gray bg-surface-elevated px-3 text-sm text-text-base placeholder:text-text-secondary focus:outline-none focus:border-sp-green"
+                      />
+                    </div>
                   </div>
                   <div className="min-h-0 flex-1 overflow-y-auto">
-                    {followersList.length === 0 ? (
-                      <p className="text-text-secondary text-sm text-center py-4">No followers yet</p>
-                    ) : (
-                      <div className="space-y-2 p-6 pt-2">
-                        {followersList.map((u) => (
-                          <button
-                            key={u.id}
-                            onClick={() => {
-                              setShowFollowersModal(false);
-                              router.push(`/profile?userId=${u.id}`);
-                            }}
-                            className="flex items-center gap-3 w-full p-2 rounded hover:bg-surface-elevated transition-colors text-left"
-                          >
-                            <div className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
-                              {u.avatar ? (
-                                <img src={getFileUrl(u.avatar) || ""} alt="avatar" className="w-full h-full object-cover" />
-                              ) : (
-                                <svg className="w-4 h-4 text-text-secondary m-auto mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                              )}
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-sm text-text-base font-bold normal-case">{u.displayName || u.username}</span>
-                              <span className="text-xs text-text-secondary normal-case">@{u.username}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    {(() => {
+                      const query = followersSearchQuery.trim().toLowerCase();
+                      let items = followersList;
+                      if (query) {
+                        items = followersList.filter(u =>
+                          (u.displayName || '').toLowerCase().includes(query) ||
+                          u.username.toLowerCase().includes(query)
+                        );
+                      } else {
+                        items = [...followersList].sort((a, b) => {
+                          const aFollowed = currentUserFollowingIds.has(a.id) ? 0 : 1;
+                          const bFollowed = currentUserFollowingIds.has(b.id) ? 0 : 1;
+                          return aFollowed - bFollowed;
+                        });
+                      }
+                      if (items.length === 0) {
+                        return <p className="text-text-secondary text-sm text-center py-4">No followers yet</p>;
+                      }
+                      return (
+                        <div className="space-y-2 p-6 pt-2">
+                          {items.map((u) => (
+                            <button
+                              key={u.id}
+                              onClick={() => {
+                                setShowFollowersModal(false);
+                                router.push(`/profile?userId=${u.id}`);
+                              }}
+                              className="flex items-center gap-3 w-full p-2 rounded hover:bg-surface-elevated transition-colors text-left"
+                            >
+                              <div className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
+                                {u.avatar ? (
+                                  <img src={getFileUrl(u.avatar) || ""} alt="avatar" className="w-full h-full object-cover" />
+                                ) : (
+                                  <svg className="w-4 h-4 text-text-secondary m-auto mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm text-text-base font-bold normal-case">{u.displayName || u.username}</span>
+                                <span className="text-xs text-text-secondary normal-case">@{u.username}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className="shrink-0 border-t border-border-gray px-6 py-3 flex justify-end">
                     <button
@@ -666,39 +707,65 @@ function ProfileContent({ userId }: { userId: string | null }) {
               <Modal isOpen={showFollowingModal} onClose={() => setShowFollowingModal(false)}>
                 <div className="flex max-h-[calc(100dvh-2rem)] flex-col">
                   <div className="shrink-0 border-b border-border-gray px-6 py-4">
-                    <h3 className="text-text-base text-base font-bold">Following</h3>
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-text-base text-base font-bold">Following</h3>
+                      <input
+                        type="text"
+                        value={followingSearchQuery}
+                        onChange={(e) => setFollowingSearchQuery(e.target.value)}
+                        placeholder="Search following..."
+                        className="h-8 w-40 rounded-full border border-border-gray bg-surface-elevated px-3 text-sm text-text-base placeholder:text-text-secondary focus:outline-none focus:border-sp-green"
+                      />
+                    </div>
                   </div>
                   <div className="min-h-0 flex-1 overflow-y-auto">
-                    {followingList.length === 0 ? (
-                      <p className="text-text-secondary text-sm text-center py-4">Not following anyone</p>
-                    ) : (
-                      <div className="space-y-2 p-6 pt-2">
-                        {followingList.map((u) => (
-                          <button
-                            key={u.id}
-                            onClick={() => {
-                              setShowFollowingModal(false);
-                              router.push(`/profile?userId=${u.id}`);
-                            }}
-                            className="flex items-center gap-3 w-full p-2 rounded hover:bg-surface-elevated transition-colors text-left"
-                          >
-                            <div className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
-                              {u.avatar ? (
-                                <img src={getFileUrl(u.avatar) || ""} alt="avatar" className="w-full h-full object-cover" />
-                              ) : (
-                                <svg className="w-4 h-4 text-text-secondary m-auto mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                              )}
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-sm text-text-base font-bold normal-case">{u.displayName || u.username}</span>
-                              <span className="text-xs text-text-secondary normal-case">@{u.username}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    {(() => {
+                      const query = followingSearchQuery.trim().toLowerCase();
+                      let items = followingList;
+                      if (query) {
+                        items = followingList.filter(u =>
+                          (u.displayName || '').toLowerCase().includes(query) ||
+                          u.username.toLowerCase().includes(query)
+                        );
+                      } else {
+                        items = [...followingList].sort((a, b) => {
+                          const aFollowed = currentUserFollowingIds.has(a.id) ? 0 : 1;
+                          const bFollowed = currentUserFollowingIds.has(b.id) ? 0 : 1;
+                          return aFollowed - bFollowed;
+                        });
+                      }
+                      if (items.length === 0) {
+                        return <p className="text-text-secondary text-sm text-center py-4">Not following anyone</p>;
+                      }
+                      return (
+                        <div className="space-y-2 p-6 pt-2">
+                          {items.map((u) => (
+                            <button
+                              key={u.id}
+                              onClick={() => {
+                                setShowFollowingModal(false);
+                                router.push(`/profile?userId=${u.id}`);
+                              }}
+                              className="flex items-center gap-3 w-full p-2 rounded hover:bg-surface-elevated transition-colors text-left"
+                            >
+                              <div className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
+                                {u.avatar ? (
+                                  <img src={getFileUrl(u.avatar) || ""} alt="avatar" className="w-full h-full object-cover" />
+                                ) : (
+                                  <svg className="w-4 h-4 text-text-secondary m-auto mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm text-text-base font-bold normal-case">{u.displayName || u.username}</span>
+                                <span className="text-xs text-text-secondary normal-case">@{u.username}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className="shrink-0 border-t border-border-gray px-6 py-3 flex justify-end">
                     <button
