@@ -562,7 +562,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                 </div>
               )}
 
-              <Modal isOpen={showUnfollowConfirm} onClose={() => setShowUnfollowConfirm(false)} centered>
+              <Modal isOpen={showUnfollowConfirm} onClose={() => setShowUnfollowConfirm(false)}>
                 <div className="p-6">
                   <h3 className="text-text-base text-base font-bold mb-2">Unfollow user</h3>
                   <p className="text-text-secondary text-sm mb-6">
@@ -595,7 +595,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                 </div>
               </Modal>
 
-              <Modal isOpen={showFollowersModal} onClose={() => setShowFollowersModal(false)} centered>
+              <Modal isOpen={showFollowersModal} onClose={() => setShowFollowersModal(false)}>
                 <div className="p-6 max-h-[80vh] flex flex-col">
                   <h3 className="text-text-base text-base font-bold mb-4">Followers</h3>
                   <div className="flex-1 overflow-y-auto">
@@ -641,7 +641,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                 </div>
               </Modal>
 
-              <Modal isOpen={showFollowingModal} onClose={() => setShowFollowingModal(false)} centered>
+              <Modal isOpen={showFollowingModal} onClose={() => setShowFollowingModal(false)}>
                 <div className="p-6 max-h-[80vh] flex flex-col">
                   <h3 className="text-text-base text-base font-bold mb-4">Following</h3>
                   <div className="flex-1 overflow-y-auto">
@@ -687,7 +687,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                 </div>
               </Modal>
 
-              <Modal isOpen={showRequestsModal} onClose={() => setShowRequestsModal(false)} centered>
+              <Modal isOpen={showRequestsModal} onClose={() => setShowRequestsModal(false)}>
                 <div className="p-6 max-h-[80vh] flex flex-col">
                   <h3 className="text-text-base text-base font-bold mb-4">Follow Requests</h3>
                   <div className="flex-1 overflow-y-auto">
