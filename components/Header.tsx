@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, Conversation, getFileUrl, usersApi, chatApi, notificationsApi, Notification } from "@/services/api";
 import { socket } from "@/services/socket";
+import CreatePostModal from "./CreatePostModal";
 import { useTheme } from "./ThemeProvider";
 
 interface HeaderProps {
@@ -16,6 +17,7 @@ interface HeaderProps {
 export default function Header({ user, onPostCreated, totalUnreadChats: propTotalUnread, unreadNotifications: propUnreadNotifications }: HeaderProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showPostModal, setShowPostModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -187,7 +189,7 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
         <div className="flex items-center gap-2">
           <div className="relative">
             <button
-              onClick={() => router.push("/create-posts")}
+              onClick={() => setShowPostModal(true)}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-elevated border border-border-gray text-text-base hover:border-light-border active:scale-95 transition-all"
               title="Create post"
             >
@@ -195,6 +197,7 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </button>
+            <CreatePostModal open={showPostModal} onClose={() => setShowPostModal(false)} onSuccess={handlePostCreated} />
           </div>
 
           <div className="relative">
