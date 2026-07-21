@@ -95,19 +95,17 @@ export default function CreatePostsPage() {
 
       <main className="flex-1">
         <div className="max-w-screen-lg mx-auto px-4 py-6">
-          <div className="bg-surface-elevated border border-border-gray rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border-gray">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => router.back()}
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base hover:bg-surface transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <h2 className="text-text-base text-base font-bold uppercase tracking-wider">Create Post</h2>
-              </div>
+          <div className="bg-surface border border-border-gray rounded-[8px] overflow-hidden">
+            <div className="px-4 py-3 border-b border-border-gray flex items-center gap-2">
+              <button
+                onClick={() => router.back()}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base hover:bg-surface transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h2 className="text-text-base text-base font-bold uppercase tracking-wider">Create Post</h2>
             </div>
 
             <div className="p-4 space-y-4">
