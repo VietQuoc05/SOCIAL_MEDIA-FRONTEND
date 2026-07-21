@@ -69,7 +69,7 @@ export const api = {
     return res.json();
   },
 
-  del: async (url: string): Promise<void> => {
+  del: async <T>(url: string): Promise<T> => {
     const res = await fetch(`${BASE_URL}${url}`, {
       method: "DELETE",
       headers: buildHeaders(),
@@ -79,6 +79,8 @@ export const api = {
       const err = await res.json().catch(() => ({ message: "Request failed" }));
       throw new Error(err.message || "Request failed");
     }
+
+    return res.json();
   },
 
   patch: async <T>(url: string, body: unknown): Promise<T> => {
@@ -232,6 +234,15 @@ export const commentsApi = {
   delete: (id: string, postId: string) => api.del(`/comments/${id}/${postId}`),
 };
 
+export interface CreatePostResponse extends Post {
+  totalPosts?: number;
+}
+
+export interface DeletePostResponse {
+  message: string;
+  totalPosts?: number;
+}
+
 export const postsApi = {
   getMyPosts: () => api.get<Post[]>("/posts/me"),
   getPost: (id: string) => api.get<Post>(`/posts/${id}`),
@@ -249,9 +260,9 @@ export const postsApi = {
       keys.push(result.key);
     }
 
-    return api.post<Post>("/posts", { caption, images: keys });
+    return api.post<CreatePostResponse>("/posts", { caption, images: keys });
   },
-  deletePost: (id: string) => api.del(`/posts/${id}`),
+  deletePost: (id: string) => api.del<DeletePostResponse>(`/posts/${id}`),
 };
 
 export interface Notification {

@@ -9,7 +9,7 @@ import { useTheme } from "./ThemeProvider";
 
 interface HeaderProps {
   user: User | null;
-  onPostCreated?: () => void;
+  onPostCreated?: (totalPosts?: number) => void;
   totalUnreadChats?: number;
   unreadNotifications?: number;
 }
@@ -164,8 +164,8 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
     router.push("/home");
   };
 
-  const handlePostCreated = () => {
-    if (onPostCreated) onPostCreated();
+  const handlePostCreated = (totalPosts?: number) => {
+    if (onPostCreated) onPostCreated(totalPosts);
   };
 
   return (

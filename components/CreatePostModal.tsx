@@ -7,7 +7,7 @@ import Modal from "./Modal";
 interface CreatePostModalProps {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (totalPosts?: number) => void;
 }
 
 interface PreviewFile {
@@ -66,10 +66,10 @@ export default function CreatePostModal({ open, onClose, onSuccess }: CreatePost
     setSubmitting(true);
     setError("");
     try {
-      await postsApi.createPost(caption.trim(), files.map(f => f.file));
+      const response = await postsApi.createPost(caption.trim(), files.map(f => f.file)) as any;
       setCaption("");
       setFiles([]);
-      onSuccess();
+      onSuccess(response?.totalPosts);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create post");

@@ -209,9 +209,12 @@ function ProfileContent({ userId }: { userId: string | null }) {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header user={me} onPostCreated={() => {
+      <Header user={me} onPostCreated={(totalPosts) => {
           if (!userId || userId === me?.id) {
             postsApi.getMyPosts().then((myPosts) => setPosts(myPosts || []));
+            if (typeof totalPosts === 'number') {
+              setUser(prev => prev ? { ...prev, totalPosts } : prev);
+            }
           }
         }} />
 

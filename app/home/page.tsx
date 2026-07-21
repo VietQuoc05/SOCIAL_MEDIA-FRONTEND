@@ -170,7 +170,12 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header user={user} onPostCreated={() => loadFeed()} />
+      <Header user={user} onPostCreated={(totalPosts) => {
+        loadFeed();
+        if (typeof totalPosts === 'number') {
+          setUser(prev => prev ? { ...prev, totalPosts } : prev);
+        }
+      }} />
 
       <main className="flex-1">
         <div className="max-w-screen-xl mx-auto px-4 py-6 flex gap-8 justify-center">
