@@ -212,4 +212,46 @@ function NotificationsSkeleton() {
   );
 }
 
-export { SkeletonBase, PostCardSkeleton, ProfileSkeleton, PostDetailSkeleton, ChatSkeleton, NotificationsSkeleton };
+function SettingsSkeleton() {
+  return (
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="h-14 bg-surface border-b border-border-gray flex-shrink-0" />
+      <main className="flex-1">
+        <div className="max-w-screen-md mx-auto px-4 py-6">
+          <SkeletonBase className="h-6 w-24 mb-6" />
+          <div className="bg-surface rounded-[8px] p-6 space-y-6">
+            <div className="flex flex-col gap-2">
+              <SkeletonBase className="h-5 w-20" />
+              <SkeletonBase className="h-3 w-48" />
+              <div className="flex gap-2 mt-2">
+                <SkeletonBase className="flex-1 h-12 rounded-full" />
+                <SkeletonBase className="flex-1 h-12 rounded-full" />
+              </div>
+            </div>
+
+            <div className="h-px bg-border-gray" />
+
+            <div className="flex flex-col gap-2">
+              <SkeletonBase className="h-5 w-20" />
+              <SkeletonBase className="h-3 w-56" />
+              <div className="flex gap-2 mt-2">
+                <SkeletonBase className="flex-1 h-12 rounded-full" />
+                <SkeletonBase className="flex-1 h-12 rounded-full" />
+              </div>
+              <SkeletonBase className="h-3 w-full" />
+            </div>
+          </div>
+        </div>
+      </main>
+      <footer className="bg-surface border-t border-border-gray">
+        <div className="max-w-screen-xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <span className="text-xs text-text-secondary normal-case">
+            © {new Date().getFullYear()} Social Media
+          </span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export { SkeletonBase, PostCardSkeleton, ProfileSkeleton, PostDetailSkeleton, ChatSkeleton, NotificationsSkeleton, SettingsSkeleton };

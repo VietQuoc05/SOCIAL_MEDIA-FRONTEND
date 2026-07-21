@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { User } from "@/app/auth/types/user";
 import { usersApi, getFileUrl } from "@/services/api";
 import { useTheme } from "@/components/ThemeProvider";
+import { SettingsSkeleton } from "@/components/Skeleton";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -60,11 +61,7 @@ export default function SettingsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-text-secondary text-sm uppercase tracking-wider">Loading...</p>
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (
@@ -72,7 +69,7 @@ export default function SettingsPage() {
       <header className="bg-surface border-b border-border-gray px-4 py-3">
         <div className="flex items-center justify-between max-w-screen-xl mx-auto">
           <h1 className="text-text-base text-base font-bold uppercase tracking-wider">
-            Settings
+            Social Media
           </h1>
           <button
             onClick={() => router.back()}
@@ -85,6 +82,9 @@ export default function SettingsPage() {
 
       <main className="flex-1">
         <div className="max-w-screen-md mx-auto px-4 py-6">
+          <h2 className="text-text-base text-lg font-bold uppercase tracking-wider mb-6">
+            Settings
+          </h2>
           <div className="bg-surface rounded-[8px] p-6 space-y-6">
             {error && (
               <div className="text-xs text-negative-red bg-negative-red/10 border border-negative-red/30 rounded-sm px-3 py-2">
