@@ -596,13 +596,15 @@ function ProfileContent({ userId }: { userId: string | null }) {
               </Modal>
 
               <Modal isOpen={showFollowersModal} onClose={() => setShowFollowersModal(false)}>
-                <div className="p-6 max-h-[80vh] flex flex-col">
-                  <h3 className="text-text-base text-base font-bold mb-4">Followers</h3>
-                  <div className="flex-1 overflow-y-auto">
+                <div className="flex max-h-[calc(100dvh-2rem)] flex-col">
+                  <div className="shrink-0 border-b border-border-gray px-6 py-4">
+                    <h3 className="text-text-base text-base font-bold">Followers</h3>
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto">
                     {followersList.length === 0 ? (
                       <p className="text-text-secondary text-sm text-center py-4">No followers yet</p>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="space-y-2 p-6 pt-2">
                         {followersList.map((u) => (
                           <button
                             key={u.id}
@@ -630,7 +632,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                       </div>
                     )}
                   </div>
-                  <div className="mt-4 flex justify-end">
+                  <div className="shrink-0 border-t border-border-gray px-6 py-3 flex justify-end">
                     <button
                       onClick={() => setShowFollowersModal(false)}
                       className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
@@ -642,13 +644,15 @@ function ProfileContent({ userId }: { userId: string | null }) {
               </Modal>
 
               <Modal isOpen={showFollowingModal} onClose={() => setShowFollowingModal(false)}>
-                <div className="p-6 max-h-[80vh] flex flex-col">
-                  <h3 className="text-text-base text-base font-bold mb-4">Following</h3>
-                  <div className="flex-1 overflow-y-auto">
+                <div className="flex max-h-[calc(100dvh-2rem)] flex-col">
+                  <div className="shrink-0 border-b border-border-gray px-6 py-4">
+                    <h3 className="text-text-base text-base font-bold">Following</h3>
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto">
                     {followingList.length === 0 ? (
                       <p className="text-text-secondary text-sm text-center py-4">Not following anyone</p>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="space-y-2 p-6 pt-2">
                         {followingList.map((u) => (
                           <button
                             key={u.id}
@@ -676,7 +680,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                       </div>
                     )}
                   </div>
-                  <div className="mt-4 flex justify-end">
+                  <div className="shrink-0 border-t border-border-gray px-6 py-3 flex justify-end">
                     <button
                       onClick={() => setShowFollowingModal(false)}
                       className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
@@ -688,13 +692,15 @@ function ProfileContent({ userId }: { userId: string | null }) {
               </Modal>
 
               <Modal isOpen={showRequestsModal} onClose={() => setShowRequestsModal(false)}>
-                <div className="p-6 max-h-[80vh] flex flex-col">
-                  <h3 className="text-text-base text-base font-bold mb-4">Follow Requests</h3>
-                  <div className="flex-1 overflow-y-auto">
+                <div className="flex max-h-[calc(100dvh-2rem)] flex-col">
+                  <div className="shrink-0 border-b border-border-gray px-6 py-4">
+                    <h3 className="text-text-base text-base font-bold">Follow Requests</h3>
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto">
                     {requestsList.length === 0 ? (
                       <p className="text-text-secondary text-sm text-center py-4">No pending requests</p>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="space-y-2 p-6 pt-2">
                         {requestsList.map((r) => (
                           <div key={r.id} className="flex items-center gap-3 w-full p-2 rounded hover:bg-surface-elevated transition-colors">
                             <div className="w-8 h-8 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
@@ -741,7 +747,7 @@ function ProfileContent({ userId }: { userId: string | null }) {
                       </div>
                     )}
                   </div>
-                  <div className="mt-4 flex justify-end">
+                  <div className="shrink-0 border-t border-border-gray px-6 py-3 flex justify-end">
                     <button
                       onClick={() => setShowRequestsModal(false)}
                       className="px-4 py-2 text-sm text-text-base bg-surface-elevated border border-border-gray rounded hover:bg-surface transition-colors"
