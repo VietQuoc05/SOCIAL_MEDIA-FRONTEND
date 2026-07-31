@@ -35,12 +35,6 @@ export default function LogoutConfirmModal({
             Keep and logout
           </button>
         </div>
-        <button
-          onClick={onClose}
-          className="w-full text-center text-sm text-text-secondary hover:text-text-base transition-colors"
-        >
-          Cancel
-        </button>
       </div>
     </Modal>
   );
