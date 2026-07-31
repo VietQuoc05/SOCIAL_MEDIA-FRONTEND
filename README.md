@@ -183,6 +183,7 @@ Switching themes updates all UI elements instantly via CSS variable overrides. T
 | `/post-detail?postId=` | View post with comments |
 | `/chat` | Real-time messaging |
 | `/search?q=` | Search users |
+| `/explore` | Explore page with search, recent searches, and trending posts |
 
 ---
 

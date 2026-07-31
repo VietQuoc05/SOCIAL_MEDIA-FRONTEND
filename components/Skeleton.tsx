@@ -254,4 +254,30 @@ function SettingsSkeleton() {
   );
 }
 
-export { SkeletonBase, PostCardSkeleton, ProfileSkeleton, PostDetailSkeleton, ChatSkeleton, NotificationsSkeleton, SettingsSkeleton };
+function ExploreSkeleton() {
+  return (
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="h-14 bg-surface border-b border-border-gray flex-shrink-0" />
+      <main className="flex-1">
+        <div className="max-w-screen-lg mx-auto px-4 py-6">
+          <SkeletonBase className="h-10 w-full rounded-full mb-6 bg-surface-elevated" />
+          <SkeletonBase className="h-5 w-20 mb-4" />
+          <div className="grid grid-cols-5 gap-1">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <SkeletonBase key={i} className="aspect-square bg-surface-elevated" />
+            ))}
+          </div>
+        </div>
+      </main>
+      <footer className="bg-surface border-t border-border-gray">
+        <div className="max-w-screen-xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <span className="text-xs text-text-secondary normal-case">
+            © {new Date().getFullYear()} Social Media
+          </span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export { SkeletonBase, PostCardSkeleton, ProfileSkeleton, PostDetailSkeleton, ChatSkeleton, NotificationsSkeleton, SettingsSkeleton, ExploreSkeleton };

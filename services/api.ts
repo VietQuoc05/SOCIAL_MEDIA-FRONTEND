@@ -208,6 +208,7 @@ export interface Post {
   author?: User;
   isLiked?: boolean;
   totalReactions?: number;
+  interactionScore?: number;
 }
 
 export interface Comment {
@@ -250,6 +251,10 @@ export const postsApi = {
   getFeed: (cursor?: string, limit = 10) =>
     api.get<{ data: Post[]; nextCursor: string | null; hasMore: boolean }>(
       `/posts/feed${cursor ? `?cursor=${encodeURIComponent(cursor)}&limit=${limit}` : `?limit=${limit}`}`,
+    ),
+  getTrending: (cursor?: string, limit = 20) =>
+    api.get<{ data: Post[]; nextCursor: string | null; hasMore: boolean }>(
+      `/posts/trending${cursor ? `?cursor=${encodeURIComponent(cursor)}&limit=${limit}` : `?limit=${limit}`}`,
     ),
   createPost: async (caption: string, files: File[]) => {
     const keys: string[] = [];
