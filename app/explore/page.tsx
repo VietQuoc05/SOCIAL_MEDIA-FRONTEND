@@ -48,6 +48,7 @@ function ExploreContent() {
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState<ValidatedSearch[]>([]);
   const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -192,12 +193,27 @@ function ExploreContent() {
     setSearchQuery("");
     setSearchResults([]);
     setShowSearchDropdown(false);
+    setSearchFocused(false);
     router.push(`/profile?userId=${u.id}`);
   };
 
   const handleRecentClick = (item: ValidatedSearch) => {
     if (!item.valid) return;
     router.push(`/profile?userId=${item.id}`);
+  };
+
+  const removeRecentSearch = (id: string) => {
+    const searches = getRecentSearches();
+    const filtered = searches.filter((s) => s.id !== id);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(filtered));
+    setRecentSearches((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const handleBack = () => {
+    setSearchFocused(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowSearchDropdown(false);
   };
 
   if (loading) {
@@ -211,17 +227,33 @@ function ExploreContent() {
       <main className="flex-1">
         <div className="max-w-screen-lg mx-auto px-4 py-6">
           <div className="relative mb-6" ref={searchRef}>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowSearchDropdown(true);
-              }}
-              onFocus={() => setShowSearchDropdown(true)}
-              placeholder="Search accounts..."
-              className="w-full h-10 px-4 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
-            />
+            <div className="flex items-center gap-2">
+              {searchFocused && (
+                <button
+                  onClick={handleBack}
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base hover:bg-surface-elevated transition-colors flex-shrink-0"
+                  title="Back"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchDropdown(true);
+                }}
+                onFocus={() => {
+                  setSearchFocused(true);
+                  setShowSearchDropdown(true);
+                }}
+                placeholder="Search accounts..."
+                className="flex-1 h-10 px-4 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
+              />
+            </div>
             {showSearchDropdown && searchQuery.trim() && (
               <div className="absolute left-0 mt-1 w-full bg-surface-elevated border border-border-gray rounded-[6px] shadow-lg z-50 max-h-80 overflow-y-auto">
                 {searchLoading ? (
@@ -273,7 +305,7 @@ function ExploreContent() {
             )}
           </div>
 
-          {searchQuery.trim().length === 0 && recentSearches.length > 0 && (
+          {searchFocused && searchQuery.trim().length === 0 && recentSearches.length > 0 && (
             <div className="mb-8">
               <h2 className="text-text-base text-sm font-bold normal-case mb-3">
                 Recent searches
@@ -282,43 +314,59 @@ function ExploreContent() {
                 {recentSearches.map((item) => {
                   const displayUser = item.valid ? item.currentData : null;
                   return item.valid ? (
-                    <button
+                    <div
                       key={item.id}
-                      onClick={() => handleRecentClick(item)}
-                      className="flex items-center gap-3 w-full p-3 bg-surface rounded-[8px] hover:bg-surface-elevated transition-colors text-left"
+                      className="flex items-center gap-3 w-full p-3 bg-surface rounded-[8px] hover:bg-surface-elevated transition-colors"
                     >
-                      <div className="w-10 h-10 rounded-full border-2 border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
-                        {displayUser?.avatar ? (
-                          <img
-                            src={getFileUrl(displayUser.avatar) || ""}
-                            alt="avatar"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <svg
-                            className="w-5 h-5 text-text-secondary m-auto mt-2.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      <button
+                        onClick={() => handleRecentClick(item)}
+                        className="flex items-center gap-3 flex-1 text-left"
+                      >
+                        <div className="w-10 h-10 rounded-full border-2 border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
+                          {displayUser?.avatar ? (
+                            <img
+                              src={getFileUrl(displayUser.avatar) || ""}
+                              alt="avatar"
+                              className="w-full h-full object-cover"
                             />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-text-base font-bold normal-case">
-                          {displayUser?.displayName || displayUser?.username || item.displayName}
-                        </span>
-                        <span className="text-xs text-text-secondary normal-case">
-                          @{displayUser?.username || item.username}
-                        </span>
-                      </div>
-                    </button>
+                          ) : (
+                            <svg
+                              className="w-5 h-5 text-text-secondary m-auto mt-2.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                              />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-text-base font-bold normal-case">
+                            {displayUser?.displayName || displayUser?.username || item.displayName}
+                          </span>
+                          <span className="text-xs text-text-secondary normal-case">
+                            @{displayUser?.username || item.username}
+                          </span>
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeRecentSearch(item.id);
+                        }}
+                        className="w-5 h-5 flex items-center justify-center rounded-full text-text-secondary hover:text-negative-red hover:bg-surface-elevated transition-colors flex-shrink-0"
+                        title="Remove from recent searches"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
                   ) : (
                     <div
                       key={item.id}
@@ -339,9 +387,21 @@ function ExploreContent() {
                           />
                         </svg>
                       </div>
-                      <span className="text-sm text-text-base font-bold normal-case">
+                      <span className="text-sm text-text-base font-bold normal-case flex-1">
                         {item.displayName}
                       </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeRecentSearch(item.id);
+                        }}
+                        className="w-5 h-5 flex items-center justify-center rounded-full text-text-secondary hover:text-negative-red hover:bg-surface-elevated transition-colors flex-shrink-0"
+                        title="Remove from recent searches"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
                   );
                 })}
@@ -349,59 +409,63 @@ function ExploreContent() {
             </div>
           )}
 
-          <div className="mb-4">
-            <h2 className="text-text-base text-lg font-bold normal-case">
-              Trending
-            </h2>
-          </div>
-          {trendingPosts.length === 0 ? (
-            <div className="bg-surface rounded-[8px] p-8 text-center">
-              <p className="text-text-secondary text-sm normal-case">
-                No trending posts yet
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-5 gap-1">
-              {trendingPosts.map((post) => {
-                const imageUrl = getFileUrl(post.images?.[0]);
-                return (
-                  <div
-                    key={post.id}
-                    className="aspect-square bg-surface-elevated overflow-hidden cursor-pointer"
-                    onClick={() => router.push(`/post-detail?postId=${post.id}`)}
-                  >
-                    {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt="post"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-surface-elevated to-background" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {hasMore && (
-            <div ref={loadMoreRef} className="py-4">
-              {loadingMore ? (
-                <div className="grid grid-cols-5 gap-1">
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <div key={i} className="aspect-square bg-surface-elevated skeleton-shimmer" />
-                  ))}
+          {!searchFocused && (
+            <>
+              <div className="mb-4">
+                <h2 className="text-text-base text-lg font-bold normal-case">
+                  Trending
+                </h2>
+              </div>
+              {trendingPosts.length === 0 ? (
+                <div className="bg-surface rounded-[8px] p-8 text-center">
+                  <p className="text-text-secondary text-sm normal-case">
+                    No trending posts yet
+                  </p>
                 </div>
               ) : (
-                <p className="text-text-secondary text-xs text-center">
-                  Scroll for more
-                </p>
+                <div className="grid grid-cols-5 gap-1">
+                  {trendingPosts.map((post) => {
+                    const imageUrl = getFileUrl(post.images?.[0]);
+                    return (
+                      <div
+                        key={post.id}
+                        className="aspect-square bg-surface-elevated overflow-hidden cursor-pointer"
+                        onClick={() => router.push(`/post-detail?postId=${post.id}`)}
+                      >
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt="post"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-surface-elevated to-background" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
-            </div>
+
+              {hasMore && (
+                <div ref={loadMoreRef} className="py-4">
+                  {loadingMore ? (
+                    <div className="grid grid-cols-5 gap-1">
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <div key={i} className="aspect-square bg-surface-elevated skeleton-shimmer" />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-text-secondary text-xs text-center">
+                      Scroll for more
+                    </p>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
