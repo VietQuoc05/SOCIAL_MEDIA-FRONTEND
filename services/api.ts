@@ -343,6 +343,23 @@ export const chatApi = {
     api.post<{ success: boolean; readAt: string }>(`/chat/read/${conversationId}`, {}),
 };
 
+export interface RecentSearchItem {
+  id: string;
+  searchedUserId: string;
+  displayName: string;
+  username: string;
+  avatar?: string;
+  createdAt?: string;
+}
+
+export const recentSearchesApi = {
+  getAll: () => api.get<RecentSearchItem[]>("/recent-searches"),
+  create: (searchedUserId: string) =>
+    api.post<RecentSearchItem>("/recent-searches", { searchedUserId }),
+  remove: (id: string) => api.del<{ success: boolean }>(`/recent-searches/${id}`),
+  clearAll: () => api.del<{ success: boolean }>("/recent-searches"),
+};
+
 export const getFileUrl = (fileName?: string) => {
   if (!fileName) return "";
   if (fileName.startsWith('http://') || fileName.startsWith('https://')) {

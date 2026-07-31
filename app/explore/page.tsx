@@ -2,44 +2,19 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { User, Post, getFileUrl, postsApi, usersApi } from "@/services/api";
+import { User, Post, getFileUrl, postsApi, usersApi, recentSearchesApi, RecentSearchItem } from "@/services/api";
 import Header from "@/components/Header";
 import { ExploreSkeleton } from "@/components/Skeleton";
 
-const RECENT_SEARCHES_KEY = "recent_searches";
-const MAX_RECENT = 10;
-
-interface RecentSearchItem {
+interface ValidatedSearch {
   id: string;
+  searchedUserId: string;
   displayName: string;
   username: string;
   avatar?: string;
-}
-
-interface ValidatedSearch extends RecentSearchItem {
   valid: boolean;
   currentData?: User;
 }
-
-const getRecentSearches = (): RecentSearchItem[] => {
-  try {
-    const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveRecentSearch = (u: User) => {
-  const searches = getRecentSearches();
-  const filtered = searches.filter((s) => s.id !== u.id);
-  const updated = [
-    { id: u.id, displayName: u.displayName, username: u.username, avatar: u.avatar },
-    ...filtered,
-  ];
-  const trimmed = updated.slice(0, MAX_RECENT);
-  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(trimmed));
-};
 
 function ExploreContent() {
   const router = useRouter();
@@ -81,35 +56,63 @@ function ExploreContent() {
   }, [router]);
 
   useEffect(() => {
-    const stored = getRecentSearches();
-    if (stored.length === 0) {
-      setRecentSearches([]);
-      return;
-    }
+    const loadRecent = async () => {
+      try {
+        const stored = (await recentSearchesApi.getAll()) as RecentSearchItem[];
+        if (stored.length === 0) {
+          setRecentSearches([]);
+          return;
+        }
 
-    const validate = async () => {
-      const results = await Promise.allSettled(
-        stored.map(async (item) => {
-          try {
-            const currentUser = (await usersApi.getUser(item.id)) as User;
-            const valid = currentUser.displayName === item.displayName;
-            return { ...item, valid, currentData: valid ? currentUser : undefined };
-          } catch {
-            return { ...item, valid: false, currentData: undefined };
-          }
-        }),
-      );
+        const results = await Promise.allSettled(
+          stored.map(async (item) => {
+            try {
+              const currentUser = (await usersApi.getUser(item.searchedUserId)) as User;
+              const valid = currentUser.displayName === item.displayName;
+              return {
+                id: item.id,
+                searchedUserId: item.searchedUserId,
+                displayName: item.displayName,
+                username: item.username,
+                avatar: item.avatar,
+                valid,
+                currentData: valid ? currentUser : undefined,
+              };
+            } catch {
+              return {
+                id: item.id,
+                searchedUserId: item.searchedUserId,
+                displayName: item.displayName,
+                username: item.username,
+                avatar: item.avatar,
+                valid: false,
+                currentData: undefined,
+              };
+            }
+          }),
+        );
 
-      setRecentSearches(
-        results.map((r, i) =>
-          r.status === "fulfilled"
-            ? r.value
-            : { ...stored[i], valid: false, currentData: undefined },
-        ),
-      );
+        setRecentSearches(
+          results.map((r, i) =>
+            r.status === "fulfilled"
+              ? r.value
+              : {
+                  id: stored[i].id,
+                  searchedUserId: stored[i].searchedUserId,
+                  displayName: stored[i].displayName,
+                  username: stored[i].username,
+                  avatar: stored[i].avatar,
+                  valid: false,
+                  currentData: undefined,
+                },
+          ),
+        );
+      } catch {
+        setRecentSearches([]);
+      }
     };
 
-    validate();
+    loadRecent();
   }, []);
 
   const loadTrending = useCallback(async (cursor?: string) => {
@@ -188,8 +191,10 @@ function ExploreContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSearchClick = (u: User) => {
-    saveRecentSearch(u);
+  const handleSearchClick = async (u: User) => {
+    try {
+      await recentSearchesApi.create(u.id);
+    } catch {}
     setSearchQuery("");
     setSearchResults([]);
     setShowSearchDropdown(false);
@@ -199,14 +204,14 @@ function ExploreContent() {
 
   const handleRecentClick = (item: ValidatedSearch) => {
     if (!item.valid) return;
-    router.push(`/profile?userId=${item.id}`);
+    router.push(`/profile?userId=${item.searchedUserId}`);
   };
 
-  const removeRecentSearch = (id: string) => {
-    const searches = getRecentSearches();
-    const filtered = searches.filter((s) => s.id !== id);
-    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(filtered));
-    setRecentSearches((prev) => prev.filter((s) => s.id !== id));
+  const removeRecentSearch = async (id: string) => {
+    try {
+      await recentSearchesApi.remove(id);
+      setRecentSearches((prev) => prev.filter((s) => s.id !== id));
+    } catch {}
   };
 
   const handleBack = () => {
