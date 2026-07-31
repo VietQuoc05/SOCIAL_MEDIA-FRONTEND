@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { User, Conversation, getFileUrl, chatApi, notificationsApi, Notification } from "@/services/api";
 import { socket } from "@/services/socket";
 import CreatePostModal from "./CreatePostModal";
+import LogoutConfirmModal from "./LogoutConfirmModal";
 import { useTheme } from "./ThemeProvider";
 
 interface HeaderProps {
@@ -18,6 +19,7 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -127,7 +129,30 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleLogoutRequest = () => {
+    setMenuOpen(false);
+    setShowLogoutConfirm(true);
+  };
+
+  const handleRemoveAndLogout = () => {
+    if (user?.id) {
+      const STORAGE_KEY = "saved_accounts";
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const accounts = raw ? JSON.parse(raw) : [];
+        const updated = accounts.filter((a: any) => a.id !== user.id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+    }
+    localStorage.removeItem("token");
+    setShowLogoutConfirm(false);
+    router.replace("/login");
+  };
+
   const handleLogout = () => {
+    setShowLogoutConfirm(false);
     localStorage.removeItem("token");
     router.replace("/login");
   };
@@ -273,7 +298,7 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
                 </button>
                 <div className="h-px bg-border-gray" />
                 <button
-                  onClick={handleLogout}
+                  onClick={handleLogoutRequest}
                   className="w-full text-left px-4 py-3 text-sm text-negative-red normal-case hover:bg-surface transition-colors flex items-center gap-2"
                 >
                   <svg className="w-4 h-4 text-negative-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,6 +311,13 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
           </div>
         </div>
       </div>
+
+      <LogoutConfirmModal
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onRemoveAndLogout={handleRemoveAndLogout}
+        onLogout={handleLogout}
+      />
     </header>
   );
 }
