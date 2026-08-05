@@ -68,9 +68,11 @@ export default function SettingsPage() {
     <div className="flex flex-col min-h-screen bg-background">
       <header className="bg-surface border-b border-border-gray px-4 py-3">
         <div className="flex items-center justify-between max-w-screen-xl mx-auto">
-          <h1 className="text-text-base text-base font-bold uppercase tracking-wider">
-            Social Media
-          </h1>
+          <img
+            src={theme === "bright" ? "/favicon_bright.ico" : "/favicon_dark.ico?v=2"}
+            alt="Social Media"
+            className="h-8 w-auto"
+          />
           <button
             onClick={() => router.back()}
             className="h-9 px-4 rounded-full bg-transparent border border-light-border text-text-base text-xs font-bold uppercase tracking-wider normal-case transition-all hover:border-text-base hover:bg-surface-elevated"

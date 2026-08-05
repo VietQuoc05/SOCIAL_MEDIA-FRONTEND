@@ -171,7 +171,7 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
       <div className="flex items-center justify-between max-w-screen-xl mx-auto gap-2">
           <div className="flex items-center gap-1 sm:gap-2">
           <img
-            src={theme === "bright" ? "/favicon_bright.ico" : "/favicon_dark.ico"}
+            src={theme === "bright" ? "/favicon_bright.ico" : "/favicon_dark.ico?v=2"}
             alt="Social Media"
             className="h-8 w-auto"
           />
