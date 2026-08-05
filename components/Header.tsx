@@ -16,6 +16,7 @@ interface HeaderProps {
 }
 
 export default function Header({ user, onPostCreated, totalUnreadChats: propTotalUnread, unreadNotifications: propUnreadNotifications }: HeaderProps) {
+  const { theme } = useTheme();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
@@ -169,9 +170,11 @@ export default function Header({ user, onPostCreated, totalUnreadChats: propTota
     <header className="sticky top-0 z-30 bg-surface border-b border-border-gray px-4 py-3">
       <div className="flex items-center justify-between max-w-screen-xl mx-auto gap-2">
           <div className="flex items-center gap-1 sm:gap-2">
-          <h1 className="text-text-base text-base font-bold uppercase tracking-wider">
-            Social Media
-          </h1>
+          <img
+            src={theme === "bright" ? "/favicon_bright.ico" : "/favicon_dark.ico"}
+            alt="Social Media"
+            className="h-8 w-auto"
+          />
           <button
             onClick={handleHomeClick}
             className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-base transition-colors"
