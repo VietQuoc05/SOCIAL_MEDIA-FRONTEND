@@ -10,7 +10,7 @@ export default function EditProfilePage() {
   const router = useRouter();
   const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
-  const [form, setForm] = useState({ username: "", displayName: "", bio: "", isPublicFollowers: true });
+  const [form, setForm] = useState({ username: "", displayName: "", bio: "", facebook: "", instagram: "", isPublicFollowers: true });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -31,6 +31,8 @@ export default function EditProfilePage() {
           username: data.username || "",
           displayName: data.displayName || "",
           bio: data.bio || "",
+          facebook: data.facebook || "",
+          instagram: data.instagram || "",
           isPublicFollowers: data.isPublicFollowers ?? true,
         });
       } catch (err) {
@@ -54,6 +56,8 @@ export default function EditProfilePage() {
         username: form.username,
         displayName: form.displayName,
         bio: form.bio,
+        facebook: form.facebook,
+        instagram: form.instagram,
         isPublicFollowers: form.isPublicFollowers,
       })) as User;
 
@@ -160,6 +164,32 @@ export default function EditProfilePage() {
                     {form.displayName.length}/30
                   </span>
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-secondary uppercase tracking-wider normal-case">
+                  Facebook Link
+                </label>
+                <input
+                  type="url"
+                  value={form.facebook}
+                  onChange={(e) => setForm({ ...form, facebook: e.target.value })}
+                  placeholder="https://facebook.com/yourusername"
+                  className="h-11 rounded-[4px] bg-surface-elevated border border-border-gray text-text-base text-sm px-3 outline-none transition-all placeholder:text-text-secondary/60 hover:border-light-border focus:border-text-base"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-secondary uppercase tracking-wider normal-case">
+                  Instagram Link
+                </label>
+                <input
+                  type="url"
+                  value={form.instagram}
+                  onChange={(e) => setForm({ ...form, instagram: e.target.value })}
+                  placeholder="https://instagram.com/yourusername"
+                  className="h-11 rounded-[4px] bg-surface-elevated border border-border-gray text-text-base text-sm px-3 outline-none transition-all placeholder:text-text-secondary/60 hover:border-light-border focus:border-text-base"
+                />
               </div>
 
               <div className="flex flex-col gap-1.5">

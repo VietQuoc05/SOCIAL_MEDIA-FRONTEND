@@ -8,6 +8,8 @@ export interface User {
   avatar?: string;
   cover?: string;
   bio?: string;
+  facebook?: string;
+  instagram?: string;
   role?: string;
   isPublicFollowers?: boolean;
   isPublicFollowing?: boolean;

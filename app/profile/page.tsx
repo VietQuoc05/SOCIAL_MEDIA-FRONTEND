@@ -8,6 +8,17 @@ import Header from "@/components/Header";
 import Modal from "@/components/Modal";
 import { socket } from "@/services/socket";
 import { ProfileSkeleton } from "@/components/Skeleton";
+import facebookIcon from "@/app/facebookicon.webp";
+import instagramIcon from "@/app/instagramicon.webp";
+
+const normalizeSocialUrl = (url?: string) => {
+  if (!url || !url.trim()) return null;
+  const trimmed = url.trim();
+  if (!/^(https?:\/\/)/i.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
+};
 
 interface FollowStats {
   followers: number;
@@ -310,6 +321,28 @@ function ProfileContent({ userId }: { userId: string | null }) {
                           </h2>
                         </div>
                          <div className="flex items-center gap-4">
+                           {normalizeSocialUrl(user?.facebook) && (
+                             <a
+                               href={normalizeSocialUrl(user?.facebook)!}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               title="Facebook"
+                               className="shrink-0"
+                             >
+                               <img src={facebookIcon.src} alt="Facebook" className="w-5 h-5" />
+                             </a>
+                           )}
+                           {normalizeSocialUrl(user?.instagram) && (
+                             <a
+                               href={normalizeSocialUrl(user?.instagram)!}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               title="Instagram"
+                               className="shrink-0"
+                             >
+                               <img src={instagramIcon.src} alt="Instagram" className="w-5 h-5" />
+                             </a>
+                           )}
                            <button
                              className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
                            >
@@ -431,6 +464,28 @@ function ProfileContent({ userId }: { userId: string | null }) {
                       </h2>
                     </div>
                     <div className="flex items-center gap-4">
+                      {normalizeSocialUrl(user?.facebook) && (
+                        <a
+                          href={normalizeSocialUrl(user?.facebook)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Facebook"
+                          className="shrink-0"
+                        >
+                          <img src={facebookIcon.src} alt="Facebook" className="w-5 h-5" />
+                        </a>
+                      )}
+                      {normalizeSocialUrl(user?.instagram) && (
+                        <a
+                          href={normalizeSocialUrl(user?.instagram)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Instagram"
+                          className="shrink-0"
+                        >
+                          <img src={instagramIcon.src} alt="Instagram" className="w-5 h-5" />
+                        </a>
+                      )}
                       <button
                         className={`text-center ${isPrivate && followStatus !== 'followed' && !!userId ? 'cursor-default' : ''}`}
                       >

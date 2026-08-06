@@ -10,6 +10,8 @@ export interface User {
   avatar?: string;
   cover?: string;
   bio?: string;
+  facebook?: string;
+  instagram?: string;
   role?: string;
   isPublicFollowers?: boolean;
   isPublicFollowing?: boolean;
@@ -155,7 +157,7 @@ export const usersApi = {
   getMe: () => api.get<User>("/users/me"),
   getUser: (id: string) => api.get<User>(`/users/${id}`),
   search: (q: string) => api.get<User[]>(`/users/search?q=${encodeURIComponent(q)}`),
-  updateProfile: (data: { username?: string; displayName?: string; bio?: string; isPublicFollowers?: boolean; isPublicFollowing?: boolean }) =>
+  updateProfile: (data: { username?: string; displayName?: string; bio?: string; facebook?: string; instagram?: string; isPublicFollowers?: boolean; isPublicFollowing?: boolean }) =>
     api.patch<User>("/users/me", data),
   uploadAvatar: async (file: File) => {
     const formData = new FormData();
