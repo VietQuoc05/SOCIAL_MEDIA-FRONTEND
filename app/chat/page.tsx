@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useRef, useCallback } from "react";
+import { Suspense, useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   User,
@@ -37,6 +37,10 @@ function ChatContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Total unread across all conversations (for Header badge)
   const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
@@ -251,6 +255,39 @@ function ChatContent() {
     };
   }, []);
 
+  // Search users by displayName or username
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    searchDebounceRef.current = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const results = await usersApi.search(searchQuery.trim());
+        // Filter out current user
+        const filtered = (results || []).filter(u => u.id !== user?.id);
+        setSearchResults(filtered);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [searchQuery, user?.id]);
+
   const loadMoreMessages = async () => {
     if (!nextCursor || !activeConversation || loadingMessages) return;
     setLoadingMessages(true);
@@ -370,6 +407,23 @@ function ChatContent() {
     markAsRead(convId);
   };
 
+  const handleSelectUser = async (selectedUser: User) => {
+    try {
+      // Check if conversation already exists
+      const existing = conversations.find(c => c.otherUser.id === selectedUser.id);
+      if (existing) {
+        handleSelectConversation(existing.id);
+        return;
+      }
+      // Create new conversation
+      const conv = await chatApi.getOrCreateConversation(selectedUser.id);
+      setConversations(prev => [conv, ...prev]);
+      handleSelectConversation(conv.id);
+    } catch {
+      // Ignore errors
+    }
+  };
+
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -402,91 +456,168 @@ function ChatContent() {
       <div className="flex-1 flex overflow-hidden">
         {/* Conversation List - Desktop sidebar */}
         <div className={`${showConvList ? "block" : "hidden"} md:block w-full md:w-80 lg:w-96 border-r border-border-gray bg-surface flex flex-col`}>
-          <div className="py-5 px-3 border-b border-border-gray">
-            <h2 className="text-text-base text-base font-bold normal-case">Messages</h2>
+          <div className="py-3 px-3 border-b border-border-gray">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search users..."
+                className="w-full h-9 pl-9 pr-8 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-base"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {conversations.length === 0 ? (
-              <div className="p-4 text-center">
-                <p className="text-text-secondary text-sm">No conversations yet</p>
-              </div>
-            ) : (
-              conversations.map((conv) => {
-                const hasUnread = (conv.unreadCount || 0) > 0;
-                return (
-                  <button
-                    key={conv.id}
-                    onClick={() => handleSelectConversation(conv.id)}
-                    className={`w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated transition-colors ${
-                      activeConversation === conv.id ? "bg-surface-elevated" : ""
-                    }`}
-                  >
-                    <div className="relative w-10 h-10 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
-                      {conv.otherUser?.avatar ? (
-                        <img
-                          src={getFileUrl(conv.otherUser.avatar) || ""}
-                          alt="avatar"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <svg
-                          className="w-5 h-5 text-text-secondary m-auto mt-2.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            {searchQuery.trim() ? (
+              <>
+                {searchLoading ? (
+                  <div className="p-4 text-center">
+                    <p className="text-text-secondary text-sm">Searching...</p>
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="p-4 text-center">
+                    <p className="text-text-secondary text-sm">No users found</p>
+                  </div>
+                ) : (
+                  searchResults.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => handleSelectUser(u)}
+                      className="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
+                        {u.avatar ? (
+                          <img
+                            src={getFileUrl(u.avatar) || ""}
+                            alt="avatar"
+                            className="w-full h-full object-cover"
                           />
-                        </svg>
-                      )}
-                      {/* Unread dot on avatar */}
-                      {hasUnread && (
-                        <span className="absolute top-0 right-0 w-3 h-3 bg-sp-green rounded-full border-2 border-surface" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm truncate ${
-                          hasUnread
-                            ? "text-text-base font-bold normal-case"
-                            : "text-text-base normal-case"
-                        }`}>
-                          {conv.otherUser?.displayName || conv.otherUser?.username || "Unknown"}
-                        </span>
-                        {conv.lastMessageAt && (
-                          <span className={`text-xs flex-shrink-0 ml-2 ${
-                            hasUnread ? "text-text-base font-bold" : "text-text-secondary"
-                          }`}>
-                            {formatTime(conv.lastMessageAt || "")}
-                          </span>
+                        ) : (
+                          <svg
+                            className="w-5 h-5 text-text-secondary m-auto mt-2.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                          </svg>
                         )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        {conv.lastSenderId && conv.lastSenderId === user?.id && (
-                          <span className={`text-xs ${hasUnread ? "text-text-base font-bold" : "text-text-secondary"}`}>You: </span>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm text-text-base normal-case truncate block">
+                          {u.displayName || u.username}
+                        </span>
+                        <span className="text-xs text-text-secondary normal-case truncate block">
+                          @{u.username}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </>
+            ) : (
+              <>
+                {conversations.length === 0 ? (
+                  <div className="p-4 text-center">
+                    <p className="text-text-secondary text-sm">No conversations yet</p>
+                  </div>
+                ) : (
+                  conversations.map((conv) => {
+                    const hasUnread = (conv.unreadCount || 0) > 0;
+                    return (
+                      <button
+                        key={conv.id}
+                        onClick={() => handleSelectConversation(conv.id)}
+                        className={`w-full flex items-center gap-3 p-3 text-left hover:bg-surface-elevated transition-colors ${
+                          activeConversation === conv.id ? "bg-surface-elevated" : ""
+                        }`}
+                      >
+                        <div className="relative w-10 h-10 rounded-full border border-border-gray bg-surface-elevated overflow-hidden flex-shrink-0">
+                          {conv.otherUser?.avatar ? (
+                            <img
+                              src={getFileUrl(conv.otherUser.avatar) || ""}
+                              alt="avatar"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg
+                              className="w-5 h-5 text-text-secondary m-auto mt-2.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                              />
+                            </svg>
+                          )}
+                          {/* Unread dot on avatar */}
+                          {hasUnread && (
+                            <span className="absolute top-0 right-0 w-3 h-3 bg-sp-green rounded-full border-2 border-surface" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className={`text-sm truncate ${
+                              hasUnread
+                                ? "text-text-base font-bold normal-case"
+                                : "text-text-base normal-case"
+                            }`}>
+                              {conv.otherUser?.displayName || conv.otherUser?.username || "Unknown"}
+                            </span>
+                            {conv.lastMessageAt && (
+                              <span className={`text-xs flex-shrink-0 ml-2 ${
+                                hasUnread ? "text-text-base font-bold" : "text-text-secondary"
+                              }`}>
+                                {formatTime(conv.lastMessageAt || "")}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {conv.lastSenderId && conv.lastSenderId === user?.id && (
+                              <span className={`text-xs ${hasUnread ? "text-text-base font-bold" : "text-text-secondary"}`}>You: </span>
+                            )}
+                            <span className={`text-xs truncate ${
+                              hasUnread ? "text-text-base font-bold" : "text-text-secondary"
+                            }`}>
+                              {conv.lastMessageImage ? "[Image]" : conv.lastMessage || "No messages yet"}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Unread count badge */}
+                        {hasUnread && (
+                          <div className="flex-shrink-0 w-5 h-5 bg-sp-green rounded-full flex items-center justify-center">
+                            <span className="text-[10px] text-white font-bold">
+                              {conv.unreadCount! > 9 ? "9+" : conv.unreadCount}
+                            </span>
+                          </div>
                         )}
-                        <span className={`text-xs truncate ${
-                          hasUnread ? "text-text-base font-bold" : "text-text-secondary"
-                        }`}>
-                          {conv.lastMessageImage ? "[Image]" : conv.lastMessage || "No messages yet"}
-                        </span>
-                      </div>
-                    </div>
-                    {/* Unread count badge */}
-                    {hasUnread && (
-                      <div className="flex-shrink-0 w-5 h-5 bg-sp-green rounded-full flex items-center justify-center">
-                        <span className="text-[10px] text-white font-bold">
-                          {conv.unreadCount! > 9 ? "9+" : conv.unreadCount}
-                        </span>
-                      </div>
-                    )}
-                  </button>
-                );
-              })
+                      </button>
+                    );
+                  })
+                )}
+              </>
             )}
           </div>
         </div>
