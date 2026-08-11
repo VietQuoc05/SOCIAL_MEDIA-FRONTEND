@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Social Media",
   description: "Connect, share, and stay in touch with friends and communities.",
+  icons: {
+    icon: "/favicon_dark.ico",
+  },
 };
 
 export default function RootLayout({
