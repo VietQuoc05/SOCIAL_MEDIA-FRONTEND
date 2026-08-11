@@ -468,7 +468,7 @@ function ChatContent() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search users..."
-                className="w-full h-9 pl-9 pr-8 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
+                className="w-full h-10 pl-9 pr-8 text-sm text-text-base normal-case bg-surface-elevated border border-border-gray rounded-full focus:outline-none focus:border-sp-green"
               />
               {searchQuery && (
                 <button
