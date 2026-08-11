@@ -135,8 +135,11 @@ function ChatSkeleton() {
       <div className="h-14 bg-surface border-b border-border-gray flex-shrink-0" />
       <div className="flex-1 flex overflow-hidden">
         <div className="block md:flex w-full md:w-80 lg:w-96 border-r border-border-gray bg-surface flex-col">
-          <div className="py-5 px-3 border-b border-border-gray">
-            <SkeletonBase className="h-5 w-32" />
+          <div className="p-3 border-b border-border-gray">
+            <div className="relative w-full">
+              <SkeletonBase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
+              <SkeletonBase className="w-full h-10 rounded-full" />
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             {Array.from({ length: 6 }).map((_, i) => (
