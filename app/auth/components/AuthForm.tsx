@@ -31,16 +31,13 @@ export function AuthForm({ mode }: AuthFormProps) {
   const switchLinkText = isLogin ? "Register" : "Login";
 
   useEffect(() => {
-    if (isLogin && success) {
+    if (success) {
       const timer = setTimeout(() => {
         window.location.href = "/home";
       }, 300);
       return () => clearTimeout(timer);
     }
-    if (!isLogin && success) {
-      // Register success - stay on register page with verify message
-    }
-  }, [isLogin, success, router]);
+  }, [success]);
 
   const validate = () => {
     if (!email) return "Email is required.";
@@ -77,7 +74,8 @@ export function AuthForm({ mode }: AuthFormProps) {
       } else {
         const normalizedDisplayName = displayName.toLowerCase();
         const result = await authApi.register(email, username, normalizedDisplayName, password);
-        setSuccess("Account created! Please check your email to verify your account.");
+        localStorage.setItem("token", result.access_token || (result as any).token);
+        setSuccess("Account created! Logging in...");
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "An error occurred";
@@ -193,26 +191,6 @@ export function AuthForm({ mode }: AuthFormProps) {
       </form>
 
       <div className="mt-6 text-center">
-        {isLogin && (
-          <>
-            <div className="mb-3">
-              <a
-                href="/forgot-password"
-                className="text-sm text-text-secondary hover:text-sp-green underline underline-offset-4 transition-colors"
-              >
-                Forgot your password?
-              </a>
-            </div>
-            <div className="mb-3">
-              <a
-                href="/resend-verify-email"
-                className="text-sm text-text-secondary hover:text-sp-green underline underline-offset-4 transition-colors"
-              >
-                Resend verification email?
-              </a>
-            </div>
-          </>
-        )}
         <p className="text-sm text-text-secondary normal-case">
           {switchLabel}
           <a

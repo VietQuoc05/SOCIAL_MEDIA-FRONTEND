@@ -139,7 +139,7 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post<LoginResponse>("/auth/login", { email, password }),
   register: (email: string, username: string, displayName: string, password: string) =>
-    api.post<{ id: string; email: string; username: string; displayName: string; message?: string }>(
+    api.post<{ id: string; email: string; username: string; displayName: string; message?: string; access_token?: string; token?: string }>(
       "/auth/register",
       { email, username, displayName, password }
     ),
