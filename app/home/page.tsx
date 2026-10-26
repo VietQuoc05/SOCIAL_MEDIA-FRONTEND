@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -69,9 +69,7 @@ export default function HomePage() {
         if (p.id === data.postId) {
           return {
             ...p,
-            isLiked: data.action === 'created' ? true : data.action === 'removed' ? false : p.isLiked,
-            // ✅ Dùng totalReactions thực tế từ backend để tránh double-count và giữ đồng bộ giữa các thiết bị
-            totalReactions: data.totalReactions ?? p.totalReactions,
+            totalReactions: (data as any).totalReacts ?? data.totalReactions ?? p.totalReactions,
           };
         }
         return p;
@@ -177,7 +175,7 @@ export default function HomePage() {
         <footer className="bg-surface border-t border-border-gray">
           <div className="max-w-screen-xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
             <span className="text-xs text-text-secondary normal-case">
-              © {new Date().getFullYear()} Social Media
+              Â© {new Date().getFullYear()} Social Media
             </span>
           </div>
         </footer>
@@ -366,7 +364,7 @@ export default function HomePage() {
       <footer className="bg-surface border-t border-border-gray">
         <div className="max-w-screen-xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
           <span className="text-xs text-text-secondary normal-case">
-            © {new Date().getFullYear()} Social Media
+            Â© {new Date().getFullYear()} Social Media
           </span>
         </div>
       </footer>
